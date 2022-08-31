@@ -1,0 +1,91 @@
+uuid:
+  -
+    value: 795bc898-1ddb-45f7-a432-587a446cce9d
+langcode:
+  -
+    value: en
+vid:
+  -
+    target_id: resource_types
+    target_type: taxonomy_vocabulary
+    target_uuid: a7f92dba-66fc-4d1f-93af-9fbea31e0e5c
+revision_created:
+  -
+    value: '2022-08-25T17:03:47+00:00'
+    format: 'Y-m-d\TH:i:sP'
+revision_user:
+  -
+    target_type: user
+    target_uuid: 6a8e9f83-380c-4427-a68c-18dc87d65dbf
+revision_log_message:
+  -
+    value: 'Created new Resource Types'
+status:
+  -
+    value: true
+name:
+  -
+    value: 'Moving Image'
+description:
+  -
+    value: 'A series of visual representations imparting an impression of motion when shown in succession'
+    format: null
+    processed: |
+      <p>A series of visual representations imparting an impression of motion when shown in succession</p>
+weight:
+  -
+    value: 0
+parent:
+  -
+    target_id: 0
+changed:
+  -
+    value: '2022-08-25T17:03:47+00:00'
+    format: 'Y-m-d\TH:i:sP'
+default_langcode:
+  -
+    value: true
+revision_translation_affected:
+  -
+    value: true
+path:
+  -
+    alias: null
+    pid: null
+    langcode: en
+content_translation_source:
+  -
+    value: und
+content_translation_outdated:
+  -
+    value: false
+content_translation_uid:
+  -
+    target_type: user
+    target_uuid: 6a8e9f83-380c-4427-a68c-18dc87d65dbf
+content_translation_created:
+  -
+    value: '2022-08-25T17:03:47+00:00'
+    format: 'Y-m-d\TH:i:sP'
+field_authority_link:
+  -
+    uri: 'http://purl.org/dc/dcmitype/MovingImage'
+    title: 'Moving Image'
+    options: {  }
+    source: dcmi_types
+field_external_authority_link:
+  -
+    uri: 'http://purl.org/dc/dcmitype/MovingImage'
+    title: 'Moving Image'
+    options: {  }
+    source: dcmi_types
+field_external_uri:
+  -
+    uri: 'http://purl.org/dc/dcmitype/MovingImage'
+    title: null
+    options: {  }
+_content_sync:
+  entity_type: taxonomy_term
+  entity_dependencies:
+    user:
+      - user.user.6a8e9f83-380c-4427-a68c-18dc87d65dbf

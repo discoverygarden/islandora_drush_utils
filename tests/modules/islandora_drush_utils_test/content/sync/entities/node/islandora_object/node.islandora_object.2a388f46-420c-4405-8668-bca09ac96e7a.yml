@@ -1,0 +1,151 @@
+uuid:
+  -
+    value: 2a388f46-420c-4405-8668-bca09ac96e7a
+langcode:
+  -
+    value: en
+type:
+  -
+    target_id: islandora_object
+    target_type: node_type
+    target_uuid: 28ff7a73-33d3-4d52-a711-03b34ac26492
+revision_timestamp:
+  -
+    value: '2022-09-02T10:33:52+00:00'
+    format: 'Y-m-d\TH:i:sP'
+revision_uid:
+  -
+    target_type: user
+    target_uuid: 6a8e9f83-380c-4427-a68c-18dc87d65dbf
+revision_log:
+  -
+    value: 'Created new Repository Item'
+status:
+  -
+    value: true
+uid:
+  -
+    target_type: user
+    target_uuid: 6a8e9f83-380c-4427-a68c-18dc87d65dbf
+title:
+  -
+    value: 'Test content - VIDEO'
+created:
+  -
+    value: '2022-09-02T10:33:21+00:00'
+    format: 'Y-m-d\TH:i:sP'
+changed:
+  -
+    value: '2022-09-02T10:33:52+00:00'
+    format: 'Y-m-d\TH:i:sP'
+promote:
+  -
+    value: true
+sticky:
+  -
+    value: false
+default_langcode:
+  -
+    value: true
+revision_translation_affected:
+  -
+    value: true
+did_image: {  }
+content_translation_source:
+  -
+    value: und
+content_translation_outdated:
+  -
+    value: false
+field_ark: {  }
+field_coordinates: {  }
+field_description: {  }
+field_digital_origin: {  }
+field_display_hints: {  }
+field_doi: {  }
+field_edtf_date_created: {  }
+field_edtf_date_issued: {  }
+field_electronic_locator: {  }
+field_enumeration_and_chronology: {  }
+field_extent: {  }
+field_faceted_subject: {  }
+field_form: {  }
+field_genre: {  }
+field_geographic_code: {  }
+field_geographic_subject: {  }
+field_handle: {  }
+field_hierarchical_geographic_su: {  }
+field_isbn: {  }
+field_item_identifier: {  }
+field_language: {  }
+field_lcc_classification: {  }
+field_linked_agent: {  }
+field_local_identifier: {  }
+field_member_of: {  }
+field_model:
+  -
+    target_type: taxonomy_term
+    target_uuid: 9faada65-8bfd-4eea-a99a-8ed1a77ad398
+field_note: {  }
+field_note_location: {  }
+field_note_paragraph:
+  -
+    target_revision_id: 5
+    target_type: paragraph
+    target_uuid: a723d1dc-205f-4df1-9689-2ac38e86f815
+field_oclc_number: {  }
+field_organizations: {  }
+field_origin_information:
+  -
+    target_revision_id: 6
+    target_type: paragraph
+    target_uuid: 933ba193-ca96-400a-9260-fc4d08121e24
+field_part: {  }
+field_physical_form: {  }
+field_physical_location: {  }
+field_pid: {  }
+field_purl: {  }
+field_record_information: {  }
+field_reformatting_quality: {  }
+field_related_item_paragraph:
+  -
+    target_revision_id: 7
+    target_type: paragraph
+    target_uuid: e0314be3-4fdf-4342-96f5-3705bce6f8b9
+field_representative_image: {  }
+field_resource_type:
+  -
+    target_type: taxonomy_term
+    target_uuid: 795bc898-1ddb-45f7-a432-587a446cce9d
+field_restriction_on_access: {  }
+field_rights_statement: {  }
+field_shelf_locator: {  }
+field_subject: {  }
+field_sub_location: {  }
+field_table_of_contents: {  }
+field_target_audience: {  }
+field_temporal_subject: {  }
+field_title:
+  -
+    target_revision_id: 8
+    target_type: paragraph
+    target_uuid: bd84c1ef-33ef-461c-bdc7-4ebebb5187e9
+field_url: {  }
+field_use_and_reproduction: {  }
+field_weight: {  }
+_content_sync:
+  entity_type: node
+  entity_dependencies:
+    user:
+      - user.user.6a8e9f83-380c-4427-a68c-18dc87d65dbf
+    taxonomy_term:
+      - taxonomy_term.islandora_models.9faada65-8bfd-4eea-a99a-8ed1a77ad398
+      - taxonomy_term.resource_types.795bc898-1ddb-45f7-a432-587a446cce9d
+    paragraph:
+      - paragraph.note.a723d1dc-205f-4df1-9689-2ac38e86f815
+      - paragraph.origin_information.933ba193-ca96-400a-9260-fc4d08121e24
+      - paragraph.related_item.e0314be3-4fdf-4342-96f5-3705bce6f8b9
+      - paragraph.title.bd84c1ef-33ef-461c-bdc7-4ebebb5187e9
+path:
+  -
+    alias: /test-content-video

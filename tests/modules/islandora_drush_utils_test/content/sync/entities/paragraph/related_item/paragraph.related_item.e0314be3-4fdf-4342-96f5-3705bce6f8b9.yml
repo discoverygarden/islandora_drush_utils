@@ -1,0 +1,43 @@
+uuid:
+  -
+    value: e0314be3-4fdf-4342-96f5-3705bce6f8b9
+langcode:
+  -
+    value: en
+type:
+  -
+    target_id: related_item
+    target_type: paragraphs_type
+    target_uuid: e582f079-e12d-410d-af86-46f85f84b946
+status:
+  -
+    value: true
+created:
+  -
+    value: '2022-09-02T10:33:52+00:00'
+    format: 'Y-m-d\TH:i:sP'
+parent_id:
+  -
+    value: '2'
+parent_type:
+  -
+    value: node
+parent_field_name:
+  -
+    value: field_related_item_paragraph
+behavior_settings:
+  -
+    value: {  }
+default_langcode:
+  -
+    value: true
+revision_translation_affected:
+  -
+    value: true
+field_related_item_extent: {  }
+field_relationship_type: {  }
+field_title_plain: {  }
+field_url: {  }
+_content_sync:
+  entity_type: paragraph
+  entity_dependencies: {  }

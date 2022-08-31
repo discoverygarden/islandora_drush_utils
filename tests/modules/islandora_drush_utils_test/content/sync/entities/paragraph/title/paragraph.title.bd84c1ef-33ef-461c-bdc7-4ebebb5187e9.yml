@@ -1,0 +1,43 @@
+uuid:
+  -
+    value: bd84c1ef-33ef-461c-bdc7-4ebebb5187e9
+langcode:
+  -
+    value: en
+type:
+  -
+    target_id: title
+    target_type: paragraphs_type
+    target_uuid: 8da94c30-f3ad-478b-a805-eb89d410bd72
+status:
+  -
+    value: true
+created:
+  -
+    value: '2022-09-02T10:33:52+00:00'
+    format: 'Y-m-d\TH:i:sP'
+parent_id:
+  -
+    value: '2'
+parent_type:
+  -
+    value: node
+parent_field_name:
+  -
+    value: field_title
+behavior_settings:
+  -
+    value: {  }
+default_langcode:
+  -
+    value: true
+revision_translation_affected:
+  -
+    value: true
+field_title:
+  -
+    value: 'Test content - VIDEO'
+field_title_type: {  }
+_content_sync:
+  entity_type: paragraph
+  entity_dependencies: {  }

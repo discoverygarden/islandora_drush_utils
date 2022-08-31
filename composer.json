@@ -1,0 +1,20 @@
+{
+    "name": "dgi/islandora_drush_utils",
+    "description": "Utility drush commands for Islandora.",
+    "license": "GNU",
+    "type": "drupal-drush",
+    "authors": [
+        {
+            "name": "DGI"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "extra": {
+        "drush": {
+            "services": {
+                "drush.services.yml": "^10"
+            }
+        }
+    }
+}
