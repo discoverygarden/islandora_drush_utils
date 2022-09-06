@@ -2,44 +2,30 @@
 
 namespace Drupal\Tests\islandora_drush_utils\Functional;
 
-use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\islandora\Functional\GenerateDerivativeTestBase;
 use Drush\TestTraits\DrushTestTrait;
 
 /**
- * @coversDefaultClass \Drupal\islandora_drush_utils\Commands\GenerateThumbnails
+ * Tests the GenerateThumbnailsTest action.
+ *
  * @group islandora_drush_utils
  */
-class GenerateThumbnailsTest extends IslandoraDrushUtilsTestBase {
+class GenerateThumbnailsTest extends GenerateDerivativeTestBase {
   use DrushTestTrait;
 
-  const TEST_NODE_COUNT = 15;
+  protected $strictConfigSchema = FALSE;
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = ['context_ui', 'islandora_image', 'dgi_i8_helper', 'islandora_drush_utils'];
 
   /**
-   * Tests the VBO Drush command.
    */
   public function testDrushCommand() {
-    $arguments = [
-      'views_bulk_operations_test',
-      'views_bulk_operations_simple_test_action',
-    ];
-
-    // Basic test.
-    $this->drush('vbo-exec', $arguments);
-    for ($i = 0; $i < self::TEST_NODE_COUNT; $i++) {
-      $this->assertStringContainsString("Test action (preconfig: , label: Title $i)", $this->getErrorOutput());
-    }
-
-    // Exposed filters test.
-    $this->drush('vbo-exec', $arguments, ['exposed' => 'sticky=1']);
-    for ($i = 0; $i < self::TEST_NODE_COUNT; $i++) {
-      $test_string = "Test action (preconfig: , label: Title $i)";
-      if ($i % 2) {
-        $this->assertStringContainsString($test_string, $this->getErrorOutput());
-      }
-      else {
-        $this->assertStringNotContainsString($test_string, $this->getErrorOutput());
-      }
-    }
+    $nid = $this->node->id();
+    $this->drush('islandora_drush_utils:rederive_thumbnails', [],['nids' => $nid]);
+    $output = $this->getErrorOutput();
+    $this->assertStringContainsString('results processed', $output);
   }
 
 }
