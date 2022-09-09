@@ -1,8 +1,0 @@
-name: 'Islandora Drush Utils Test module'
-description: "Test Drush utility functions for Islandora."
-type: module
-package: DGI
-core_version_requirement: ^8 || ^9
-dependencies:
-  - islandora:islandora
-  - islandora_drush_utils:islandora_drush_utils
