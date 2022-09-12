@@ -146,7 +146,7 @@ class Rederive extends DrushCommands {
         ]);
       }
       catch (\Exception $e) {
-        $this->logger->exception('Encountered an exception: {exception}', [
+        $this->logger->error('Encountered an exception: {exception}', [
           'exception' => $e,
         ]);
       }
