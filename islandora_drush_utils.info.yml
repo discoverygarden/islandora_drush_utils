@@ -2,7 +2,7 @@ name: 'Islandora Drush Utils'
 description: "Drush utility functions for Islandora."
 type: module
 package: DGI
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || 10
 dependencies:
   - islandora:islandora
   - dgi_i8_helper:dgi_i8_helper
