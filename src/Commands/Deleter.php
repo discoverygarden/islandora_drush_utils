@@ -133,26 +133,12 @@ class Deleter extends DrushCommands {
   /**
    * Helper; grab some specific storages from services.
    */
-  protected function init() : void {
+  protected function init(): void {
     $this->nodeStorage = $this->entityTypeManager->getStorage('node');
     $this->mediaStorage = $this->entityTypeManager->getStorage('media');
 
     $this->traversalQueue = $this->queueFactory->get("{$this->queuePrefix}.traversal", TRUE);
     $this->deletionQueue = $this->queueFactory->get("{$this->queuePrefix}.deletion", TRUE);
-  }
-
-  /**
-   * Logging helper.
-   *
-   * @param string $message
-   *   The message to log.
-   * @param array $context
-   *   Replacements/context for the message.
-   * @param mixed $level
-   *   The log level.
-   */
-  protected function log($message, array $context = [], $level = LogLevel::DEBUG) : void {
-    $this->ourLogger->log($level, $message, $context);
   }
 
   /**
@@ -180,6 +166,59 @@ class Deleter extends DrushCommands {
   }
 
   /**
+   * Deletes recursively.
+   *
+   * Given a comma-separated list of nodes to target, performs a breadth-first
+   * search to find all descendent nodes and deletes them, including their
+   * related media, and marking files related to media as "temporary" such that
+   * they become eligible for garbage collection by Drupal.
+   *
+   * @param string $ids
+   *   Comma-separated list of node IDs to be targeted.
+   * @param array $options
+   *   Array of options passed by the command.
+   *
+   * @command islandora_drush_utils:delete-recursively
+   * @aliases idu:dr, dr
+   * @option empty Keep the specified IDs; only delete descendents.
+   * @option dry-run Avoid making changes to the system.
+   * @usage drush islandora_drush_utils:delete-recursively --verbose --dry-run
+   *   --empty 10 Dry-run/simulate deleting all children of node 10.
+   * @usage drush islandora_drush_utils:delete-recursively --verbose --empty 10
+   *   Delete all children of node 10.
+   * @usage drush islandora_drush_utils:delete-recursively --verbose --dry-run
+   *   10,14 Dry-run/simulate deleting all children of nodes 10 and 14, as well
+   *   as the nodes 10 and 14 themselves.
+   * @usage drush islandora_drush_utils:delete-recursively --verbose 10,14
+   *   Delete all children of nodes 10 and 14, as well as the nodes 10 and 14
+   *   themselves.
+   * @dgi-i8-helper-user-wrap
+   */
+  public function deleteRecursively(string $ids, array $options = [
+    'empty' => FALSE,
+    'dry-run' => FALSE,
+  ]): void {
+    $this->options = $options;
+    foreach (explode(',', $ids) as $id) {
+      $this->enqueueTraversal(
+        $id,
+        !$this->options['empty']
+      );
+    }
+
+    $batch = [
+      'title' => dt('Discovering and deleting recursively'),
+      'operations' => [
+        [[$this, 'traverse'], []],
+        [[$this, 'delete'], []],
+      ],
+      'finished' => [$this, 'finished'],
+    ];
+    batch_set($batch);
+    drush_backend_batch_process();
+  }
+
+  /**
    * Helper; enqueue items to the traversal queue.
    *
    * @param string|int $id
@@ -204,74 +243,17 @@ class Deleter extends DrushCommands {
   }
 
   /**
-   * Helper; enqueue items to the deletion queue.
+   * Logging helper.
    *
-   * @param string|int $id
-   *   Node IDs to be deleted.
-   *
-   * @return int|bool
-   *   The ID of the queue item created on success; otherwise, boolean FALSE.
+   * @param string $message
+   *   The message to log.
+   * @param array $context
+   *   Replacements/context for the message.
+   * @param mixed $level
+   *   The log level.
    */
-  protected function enqueueDeletion($id) {
-    $result = $this->deletionQueue->createItem([
-      'id' => $id,
-    ]);
-    assert($result !== FALSE);
-    $this->log('Enqueued deletion of {id}.', ['id' => $id]);
-    return $result;
-  }
-
-  /**
-   * Deletes recursively.
-   *
-   * Given a comma-separated list of nodes to target, performs a breadth-first
-   * search to find all descendent nodes and deletes them, including their
-   * related media, and marking files related to media as "temporary" such that
-   * they become eligible for garbage collection by Drupal.
-   *
-   * @param string $ids
-   *   Comma-separated list of node IDs to be targeted.
-   * @param array $options
-   *   Array of options passed by the command.
-   *
-   * @command islandora_drush_utils:delete-recursively
-   * @aliases idu:dr, dr
-   * @option empty Keep the specified IDs; only delete descendents.
-   * @option dry-run Avoid making changes to the system.
-   * @usage drush islandora_drush_utils:delete-recursively --verbose --dry-run --empty 10
-   *   Dry-run/simulate deleting all children of node 10.
-   * @usage drush islandora_drush_utils:delete-recursively --verbose --empty 10
-   *   Delete all children of node 10.
-   * @usage drush islandora_drush_utils:delete-recursively --verbose --dry-run 10,14
-   *   Dry-run/simulate deleting all children of nodes 10 and 14, as well as the
-   *   nodes 10 and 14 themselves.
-   * @usage drush islandora_drush_utils:delete-recursively --verbose 10,14
-   *   Delete all children of nodes 10 and 14, as well as the nodes 10 and 14
-   *   themselves.
-   * @dgi-i8-helper-user-wrap
-   */
-  public function deleteRecursively(string $ids, array $options = [
-    'empty' => FALSE,
-    'dry-run' => FALSE,
-  ]) : void {
-    $this->options = $options;
-    foreach (explode(',', $ids) as $id) {
-      $this->enqueueTraversal(
-        $id,
-        !$this->options['empty']
-      );
-    }
-
-    $batch = [
-      'title' => dt('Discovering and deleting recursively'),
-      'operations' => [
-        [[$this, 'traverse'], []],
-        [[$this, 'delete'], []],
-      ],
-      'finished' => [$this, 'finished'],
-    ];
-    batch_set($batch);
-    drush_backend_batch_process();
+  protected function log($message, array $context = [], $level = LogLevel::DEBUG): void {
+    $this->ourLogger->log($level, $message, $context);
   }
 
   /**
@@ -279,6 +261,20 @@ class Deleter extends DrushCommands {
    */
   public function finished() {
     $this->log('Finished batch execution.');
+  }
+
+  /**
+   * Batch op callback; visit all items in the queue, populating that to delete.
+   *
+   * @param array|\DrushBatchContext $context
+   *   A reference to the batch context.
+   */
+  public function traverse(&$context): void {
+    $this->doOp(
+      $this->traversalQueue,
+      [$this, 'doTraverse'],
+      $context
+    );
   }
 
   /**
@@ -291,7 +287,7 @@ class Deleter extends DrushCommands {
    * @param array|\DrushBatchContext $context
    *   A reference to the batch context.
    */
-  protected function doOp(QueueInterface $queue, callable $operation, &$context) : void {
+  protected function doOp(QueueInterface $queue, callable $operation, &$context): void {
     $sandbox =& $context['sandbox'];
 
     if (!isset($sandbox['total'])) {
@@ -318,6 +314,20 @@ class Deleter extends DrushCommands {
   }
 
   /**
+   * Batch op callback; delete all nodes in the given queue.
+   *
+   * @param array|\DrushBatchContext $context
+   *   A reference to the batch context.
+   */
+  public function delete(&$context): void {
+    $this->doOp(
+      $this->deletionQueue,
+      [$this, 'doDelete'],
+      $context
+    );
+  }
+
+  /**
    * Traversal operation callback.
    *
    * @param array $item
@@ -338,17 +348,21 @@ class Deleter extends DrushCommands {
   }
 
   /**
-   * Batch op callback; visit all items in the queue, populating that to delete.
+   * Helper; enqueue items to the deletion queue.
    *
-   * @param array|\DrushBatchContext $context
-   *   A reference to the batch context.
+   * @param string|int $id
+   *   Node IDs to be deleted.
+   *
+   * @return int|bool
+   *   The ID of the queue item created on success; otherwise, boolean FALSE.
    */
-  public function traverse(&$context) : void {
-    $this->doOp(
-      $this->traversalQueue,
-      [$this, 'doTraverse'],
-      $context
-    );
+  protected function enqueueDeletion($id) {
+    $result = $this->deletionQueue->createItem([
+      'id' => $id,
+    ]);
+    assert($result !== FALSE);
+    $this->log('Enqueued deletion of {id}.', ['id' => $id]);
+    return $result;
   }
 
   /**
@@ -364,26 +378,12 @@ class Deleter extends DrushCommands {
   }
 
   /**
-   * Batch op callback; delete all nodes in the given queue.
-   *
-   * @param array|\DrushBatchContext $context
-   *   A reference to the batch context.
-   */
-  public function delete(&$context) : void {
-    $this->doOp(
-      $this->deletionQueue,
-      [$this, 'doDelete'],
-      $context
-    );
-  }
-
-  /**
    * Handle deleting a node.
    *
    * @param int|string $id
    *   The node ID to delete.
    */
-  protected function deleteNode($id) : void {
+  protected function deleteNode($id): void {
     $this->log('Deleting {id}.', ['id' => $id]);
     $tx = $this->database->startTransaction();
     try {
@@ -406,86 +406,13 @@ class Deleter extends DrushCommands {
   }
 
   /**
-   * Find media related to the given node.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The target node.
-   *
-   * @return \Traversable
-   *   A generated mapping of media IDs mapped to the loaded media entity.
-   */
-  protected function findRelatedMedia(NodeInterface $node) : \Traversable {
-    $results = $this->mediaStorage->getQuery()
-      ->condition('field_media_of', $node->id())
-      ->execute();
-    foreach ($results as $mid) {
-      yield $mid => $this->mediaStorage->load($mid);
-    }
-  }
-
-  /**
-   * Handle deleting translations of translatable content.
-   *
-   * @param \Drupal\Core\TypedData\TranslatableInterface $entity
-   *   The target entity of which to delete translations.
-   * @param string $template
-   *   A template string, to be logged. The 'lang` placeholder will
-   *   be replaced with the language code.
-   * @param array $replacements
-   *   Additional replacements to be applied to the $template string.
-   */
-  protected function deleteTranslations(
-    TranslatableInterface $entity,
-    string $template = 'Deleting {lang} translation of {entity_type} {id}.',
-    array $replacements = []
-  ) : void {
-    foreach (array_keys($entity->getTranslationLanguages(FALSE)) as $langcode) {
-      $this->log($template, $replacements + [
-          'lang' => $langcode,
-          'entity_type' => $entity->getEntityTypeId(),
-          'id' => $entity->id(),
-        ]);
-      $this->op([$entity, 'removeTranslation'], [$langcode]);
-    }
-  }
-
-  /**
-   * Help find related files of a given media entity.
-   *
-   * @param \Drupal\media\MediaInterface $media
-   *   The target media.
-   *
-   * @return \Traversable
-   *   The loaded file entities.
-   */
-  protected function findRelatedFiles(MediaInterface $media) : \Traversable {
-    $yielded = [];
-    $fields = $this->entityFieldManager->getFieldDefinitions('media', $media->bundle());
-    foreach ($fields as $field) {
-      if (in_array($field->getType(), ['file', 'image'])) {
-        foreach ($media->{$field->getName()} as $item) {
-          $entity = $item->entity;
-          // XXX: Avoid handling the same files multiple times; there seems to
-          // be the same files referenced on multiple fields sometimes, such as:
-          // - thumbnail; and
-          // - field_media_image.
-          if (!in_array($entity->id(), $yielded)) {
-            yield $entity;
-            $yielded[] = $entity->id();
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * Make the deletions on the media and related files.
    *
    * @param \Drupal\node\NodeInterface $node
    *   The target node of which we are to delete the media (and files and so
    *   on).
    */
-  protected function deleteRelatedMedia(NodeInterface $node) : void {
+  protected function deleteRelatedMedia(NodeInterface $node): void {
     foreach ($this->findRelatedMedia($node) as $media) {
       // Mark related files as temporary.
       foreach ($this->findRelatedFiles($media) as $file) {
@@ -517,25 +444,49 @@ class Deleter extends DrushCommands {
   }
 
   /**
-   * Helper; format a callable for output.
+   * Find media related to the given node.
    *
-   * Adapted from \drush_op().
+   * @param \Drupal\node\NodeInterface $node
+   *   The target node.
    *
-   * @param callable $callable
-   *   The callable to be formatted.
-   *
-   * @return string
-   *   The formatted callable.
+   * @return \Traversable
+   *   A generated mapping of media IDs mapped to the loaded media entity.
    */
-  protected function formatCallable(callable $callable) {
-    if (!is_array($callable)) {
-      return $callable;
+  protected function findRelatedMedia(NodeInterface $node): \Traversable {
+    $results = $this->mediaStorage->getQuery()
+      ->condition('field_media_of', $node->id())
+      ->execute();
+    foreach ($results as $mid) {
+      yield $mid => $this->mediaStorage->load($mid);
     }
-    elseif (is_object($callable[0])) {
-      return get_class($callable[0]) . '::' . $callable[1];
-    }
-    else {
-      return implode('::', $callable);
+  }
+
+  /**
+   * Help find related files of a given media entity.
+   *
+   * @param \Drupal\media\MediaInterface $media
+   *   The target media.
+   *
+   * @return \Traversable
+   *   The loaded file entities.
+   */
+  protected function findRelatedFiles(MediaInterface $media): \Traversable {
+    $yielded = [];
+    $fields = $this->entityFieldManager->getFieldDefinitions('media', $media->bundle());
+    foreach ($fields as $field) {
+      if (in_array($field->getType(), ['file', 'image'])) {
+        foreach ($media->{$field->getName()} as $item) {
+          $entity = $item->entity;
+          // XXX: Avoid handling the same files multiple times; there seems to
+          // be the same files referenced on multiple fields sometimes, such as:
+          // - thumbnail; and
+          // - field_media_image.
+          if (!in_array($entity->id(), $yielded)) {
+            yield $entity;
+            $yielded[] = $entity->id();
+          }
+        }
+      }
     }
   }
 
@@ -566,6 +517,55 @@ class Deleter extends DrushCommands {
       'args' => var_export($args, TRUE),
     ]);
     return call_user_func_array($op, $args);
+  }
+
+  /**
+   * Helper; format a callable for output.
+   *
+   * Adapted from \drush_op().
+   *
+   * @param callable $callable
+   *   The callable to be formatted.
+   *
+   * @return string
+   *   The formatted callable.
+   */
+  protected function formatCallable(callable $callable) {
+    if (!is_array($callable)) {
+      return $callable;
+    }
+    elseif (is_object($callable[0])) {
+      return get_class($callable[0]) . '::' . $callable[1];
+    }
+    else {
+      return implode('::', $callable);
+    }
+  }
+
+  /**
+   * Handle deleting translations of translatable content.
+   *
+   * @param \Drupal\Core\TypedData\TranslatableInterface $entity
+   *   The target entity of which to delete translations.
+   * @param string $template
+   *   A template string, to be logged. The 'lang` placeholder will
+   *   be replaced with the language code.
+   * @param array $replacements
+   *   Additional replacements to be applied to the $template string.
+   */
+  protected function deleteTranslations(
+    TranslatableInterface $entity,
+    string $template = 'Deleting {lang} translation of {entity_type} {id}.',
+    array $replacements = []
+  ): void {
+    foreach (array_keys($entity->getTranslationLanguages(FALSE)) as $langcode) {
+      $this->log($template, $replacements + [
+        'lang' => $langcode,
+        'entity_type' => $entity->getEntityTypeId(),
+        'id' => $entity->id(),
+      ]);
+      $this->op([$entity, 'removeTranslation'], [$langcode]);
+    }
   }
 
 }

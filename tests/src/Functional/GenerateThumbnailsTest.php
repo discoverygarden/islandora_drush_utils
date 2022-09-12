@@ -11,19 +11,30 @@ use Drush\TestTraits\DrushTestTrait;
  * @group islandora_drush_utils
  */
 class GenerateThumbnailsTest extends GenerateDerivativeTestBase {
+
   use DrushTestTrait;
 
-  protected $strictConfigSchema = FALSE;
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['context_ui', 'islandora_image', 'dgi_i8_helper', 'islandora_drush_utils'];
+  protected static $modules = [
+    'context_ui',
+    'islandora_image',
+    'dgi_i8_helper',
+    'islandora_drush_utils',
+  ];
 
   /**
+   * {@inheritdoc}
+   */
+  protected $strictConfigSchema = FALSE;
+
+  /**
+   * {@inheritdoc}
    */
   public function testDrushCommand() {
     $nid = $this->node->id();
-    $this->drush('islandora_drush_utils:rederive_thumbnails', [],['nids' => $nid]);
+    $this->drush('islandora_drush_utils:rederive_thumbnails', [], ['nids' => $nid]);
     $output = $this->getErrorOutput();
     $this->assertStringContainsString('results processed', $output);
   }

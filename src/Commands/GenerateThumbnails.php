@@ -5,7 +5,6 @@ namespace Drupal\islandora_drush_utils\Commands;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-
 use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
 
@@ -58,11 +57,14 @@ class GenerateThumbnails extends DrushCommands {
    * Rederive thumbnails for nodes.
    *
    * @option nids Comma separated list or path to file containing a
-   *   a list of node IDs to generate thumbnails for. The file should have nodes
+   *   a list of node IDs to generate thumbnails for. The file should have
+   *   nodes
    *   separated by a new line.
-   * @option bundle When the nids option is not provided the bundle will be used
+   * @option bundle When the nids option is not provided the bundle will be
+   *   used
    *   to filter results.
-   * @option model The name of the model to filter by (Video, Image, Page, etc.).
+   * @option model The name of the model to filter by (Video, Image, Page,
+   *   etc.).
    *
    * @command islandora_drush_utils:rederive_thumbnails
    * @aliases idu:rtn,rtn
@@ -70,7 +72,7 @@ class GenerateThumbnails extends DrushCommands {
    * @dgi-i8-helper-user-wrap
    */
   public function rederive(array $options = [
-    'nids'   => NULL,
+    'nids' => NULL,
     'bundle' => 'islandora_object',
     'model' => 'Video',
   ]) {

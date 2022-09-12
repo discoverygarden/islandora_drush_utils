@@ -3,12 +3,11 @@
 namespace Drupal\islandora_drush_utils\Commands;
 
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
 use Drupal\islandora\Plugin\ContextReaction\DerivativeReaction;
-
 use Drush\Commands\DrushCommands;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -63,12 +62,12 @@ class Rederive extends DrushCommands {
    *
    * @command islandora_drush_utils:rederive
    * @aliases islandora_drush_utils:r,idu:r
-   *
    */
   public function rederive(array $options = [
     'source_uri' => 'http://pcdm.org/use#OriginalFile',
   ]) {
-    $original_file_taxonomy_ids = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery()
+    $original_file_taxonomy_ids = $this->entityTypeManager->getStorage('taxonomy_term')
+      ->getQuery()
       ->condition('field_external_uri', $options['source_uri'])
       ->execute();
     if (empty($original_file_taxonomy_ids)) {
