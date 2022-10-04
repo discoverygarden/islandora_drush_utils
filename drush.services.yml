@@ -28,3 +28,18 @@ services:
       - '@database'
     tags:
       - name: drush.command
+  islandora_drush_utils.command.user_wrapper:
+    class: \Drupal\islandora_drush_utils\Commands\UserWrapperCommands
+    arguments:
+      - '@account_switcher'
+      - '@entity_type.manager'
+      - false
+    tags:
+      - name: drush.command
+  islandora_drush_utils.command.user_wrapping_alterer:
+    class: \Drupal\islandora_drush_utils\Commands\UserWrappingAlterer
+    tags:
+      - name: drush.command_info_alterer
+    arguments:
+      - '@logger.islandora_drush_utils'
+      - false

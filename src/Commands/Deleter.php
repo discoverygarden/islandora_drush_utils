@@ -110,22 +110,24 @@ class Deleter extends DrushCommands {
    * Constructor.
    */
   public function __construct(
-    LoggerInterface $logger,
-    EntityTypeManagerInterface $entity_type_manager,
-    QueueFactory $queue_factory,
-    Connection $database,
-    EntityFieldManagerInterface $entity_field_manager
-  ) {
+        LoggerInterface $logger,
+        EntityTypeManagerInterface $entity_type_manager,
+        QueueFactory $queue_factory,
+        Connection $database,
+        EntityFieldManagerInterface $entity_field_manager
+    ) {
     $this->ourLogger = $logger;
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->queueFactory = $queue_factory;
     $this->database = $database;
 
-    $this->queuePrefix = implode('.', [
-      __CLASS__,
-      (new Random())->name(),
-    ]);
+    $this->queuePrefix = implode(
+          '.', [
+            __CLASS__,
+            (new Random())->name(),
+          ]
+      );
 
     $this->init();
   }
@@ -146,14 +148,14 @@ class Deleter extends DrushCommands {
    */
   public function __sleep() {
     return array_diff(
-      $this->traitSleep(),
-      [
-        'nodeStorage',
-        'mediaStorage',
-        'traversalQueue',
-        'deletionQueue',
-      ]
-    );
+          $this->traitSleep(),
+          [
+            'nodeStorage',
+            'mediaStorage',
+            'traversalQueue',
+            'deletionQueue',
+          ]
+      );
   }
 
   /**
@@ -192,7 +194,7 @@ class Deleter extends DrushCommands {
    * @usage drush islandora_drush_utils:delete-recursively --verbose 10,14
    *   Delete all children of nodes 10 and 14, as well as the nodes 10 and 14
    *   themselves.
-   * @dgi-i8-helper-user-wrap
+   * @islandora-drush-utils-user-wrap
    */
   public function deleteRecursively(string $ids, array $options = [
     'empty' => FALSE,
@@ -201,16 +203,16 @@ class Deleter extends DrushCommands {
     $this->options = $options;
     foreach (explode(',', $ids) as $id) {
       $this->enqueueTraversal(
-        $id,
-        !$this->options['empty']
-      );
+            $id,
+            !$this->options['empty']
+        );
     }
 
     $batch = [
       'title' => dt('Discovering and deleting recursively'),
       'operations' => [
-        [[$this, 'traverse'], []],
-        [[$this, 'delete'], []],
+      [[$this, 'traverse'], []],
+      [[$this, 'delete'], []],
       ],
       'finished' => [$this, 'finished'],
     ];
@@ -230,15 +232,19 @@ class Deleter extends DrushCommands {
    *   The ID of the queue item created on success; otherwise, boolean FALSE.
    */
   protected function enqueueTraversal($id, $delete = TRUE) {
-    $result = $this->traversalQueue->createItem([
-      'id' => $id,
-      'delete' => $delete,
-    ]);
+    $result = $this->traversalQueue->createItem(
+          [
+            'id' => $id,
+            'delete' => $delete,
+          ]
+      );
     assert($result !== FALSE);
-    $this->log('Enqueued traversal of {id}, to delete: {delete}', [
-      'id' => $id,
-      'delete' => $delete ? dt('true') : dt('false'),
-    ]);
+    $this->log(
+          'Enqueued traversal of {id}, to delete: {delete}', [
+            'id' => $id,
+            'delete' => $delete ? dt('true') : dt('false'),
+          ]
+      );
     return $result;
   }
 
@@ -271,10 +277,10 @@ class Deleter extends DrushCommands {
    */
   public function traverse(&$context): void {
     $this->doOp(
-      $this->traversalQueue,
-      [$this, 'doTraverse'],
-      $context
-    );
+          $this->traversalQueue,
+          [$this, 'doTraverse'],
+          $context
+      );
   }
 
   /**
@@ -321,10 +327,10 @@ class Deleter extends DrushCommands {
    */
   public function delete(&$context): void {
     $this->doOp(
-      $this->deletionQueue,
-      [$this, 'doDelete'],
-      $context
-    );
+          $this->deletionQueue,
+          [$this, 'doDelete'],
+          $context
+      );
   }
 
   /**
@@ -357,9 +363,11 @@ class Deleter extends DrushCommands {
    *   The ID of the queue item created on success; otherwise, boolean FALSE.
    */
   protected function enqueueDeletion($id) {
-    $result = $this->deletionQueue->createItem([
-      'id' => $id,
-    ]);
+    $result = $this->deletionQueue->createItem(
+          [
+            'id' => $id,
+          ]
+      );
     assert($result !== FALSE);
     $this->log('Enqueued deletion of {id}.', ['id' => $id]);
     return $result;
@@ -416,29 +424,33 @@ class Deleter extends DrushCommands {
     foreach ($this->findRelatedMedia($node) as $media) {
       // Mark related files as temporary.
       foreach ($this->findRelatedFiles($media) as $file) {
-        $this->log('Setting file {fid} of media {id} of node {nid} to "temporary".', [
-          'fid' => $file->id(),
-          'id' => $media->id(),
-          'nid' => $node->id(),
-        ]);
+        $this->log(
+              'Setting file {fid} of media {id} of node {nid} to "temporary".', [
+                'fid' => $file->id(),
+                'id' => $media->id(),
+                'nid' => $node->id(),
+              ]
+          );
         $this->op([$file, 'setTemporary']);
         $this->op([$file, 'save']);
       }
 
       // Delete the media translations.
       $this->deleteTranslations(
-        $media,
-        'Deleting {lang} translations of media {id}, for node {nid}.',
-        [
-          'nid' => $node->id(),
-        ]
-      );
+            $media,
+            'Deleting {lang} translations of media {id}, for node {nid}.',
+            [
+              'nid' => $node->id(),
+            ]
+        );
 
       // Delete the media.
-      $this->log('Deleting media {id}; of node {nid}.', [
-        'id' => $media->id(),
-        'nid' => $node->id(),
-      ]);
+      $this->log(
+            'Deleting media {id}; of node {nid}.', [
+              'id' => $media->id(),
+              'nid' => $node->id(),
+            ]
+        );
       $this->op([$media, 'delete']);
     }
   }
@@ -506,16 +518,20 @@ class Deleter extends DrushCommands {
    */
   protected function op(callable $op, array $args = []) {
     if ($this->options['dry-run'] ?? FALSE) {
-      $this->log('Would call {callable} with {args}.', [
-        'callable' => $this->formatCallable($op),
-        'args' => var_export($args, TRUE),
-      ]);
+      $this->log(
+            'Would call {callable} with {args}.', [
+              'callable' => $this->formatCallable($op),
+              'args' => var_export($args, TRUE),
+            ]
+        );
       return TRUE;
     }
-    $this->log('Calling {callable} with {args}.', [
-      'callable' => $this->formatCallable($op),
-      'args' => var_export($args, TRUE),
-    ]);
+    $this->log(
+          'Calling {callable} with {args}.', [
+            'callable' => $this->formatCallable($op),
+            'args' => var_export($args, TRUE),
+          ]
+      );
     return call_user_func_array($op, $args);
   }
 
@@ -554,16 +570,18 @@ class Deleter extends DrushCommands {
    *   Additional replacements to be applied to the $template string.
    */
   protected function deleteTranslations(
-    TranslatableInterface $entity,
-    string $template = 'Deleting {lang} translation of {entity_type} {id}.',
-    array $replacements = []
-  ): void {
+        TranslatableInterface $entity,
+        string $template = 'Deleting {lang} translation of {entity_type} {id}.',
+        array $replacements = []
+    ): void {
     foreach (array_keys($entity->getTranslationLanguages(FALSE)) as $langcode) {
-      $this->log($template, $replacements + [
-        'lang' => $langcode,
-        'entity_type' => $entity->getEntityTypeId(),
-        'id' => $entity->id(),
-      ]);
+      $this->log(
+            $template, $replacements + [
+              'lang' => $langcode,
+              'entity_type' => $entity->getEntityTypeId(),
+              'id' => $entity->id(),
+            ]
+        );
       $this->op([$entity, 'removeTranslation'], [$langcode]);
     }
   }

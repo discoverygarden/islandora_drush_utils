@@ -128,11 +128,11 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
               $context['results']['error'] = TRUE;
               $context['results']['nodes failed'][] = $entity->id();
               $context['message'] = t(
-                      '@action on node "@id" failed', [
-                        '@action' => $action->id(),
-                        '@id' => $entity->id(),
-                      ]
-                  );
+                    '@action on node "@id" failed', [
+                      '@action' => $action->id(),
+                      '@id' => $entity->id(),
+                    ]
+                );
             }
           }
         }
@@ -152,7 +152,7 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
             'Encountered an exception: @exception', [
               '@exception' => $e,
             ]
-            );
+        );
     }
     $sandbox['offset'] = $sandbox['offset'] + $limit;
     $context['finished'] = $sandbox['offset'] / $sandbox['total'];
