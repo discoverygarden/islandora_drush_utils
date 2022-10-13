@@ -62,6 +62,8 @@ class Rederive extends DrushCommands {
    *
    * @command islandora_drush_utils:rederive
    * @aliases islandora_drush_utils:r,idu:r
+   *
+   * @dgi-i8-helper-user-wrap
    */
   public function rederive(array $options = [
     'source_uri' => 'http://pcdm.org/use#OriginalFile',
