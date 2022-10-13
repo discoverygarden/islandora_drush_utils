@@ -1,0 +1,30 @@
+services:
+  logger.islandora_drush_utils:
+    parent: logger.channel_base
+    arguments: [ 'islandora_drush_utils' ]
+  islandora_drush_utils.deleter:
+    class: \Drupal\islandora_drush_utils\Commands\Deleter
+    tags:
+      - name: drush.command
+    arguments:
+      - '@logger.islandora_drush_utils'
+      - '@entity_type.manager'
+      - '@queue'
+      - '@database'
+      - '@entity_field.manager'
+  islandora_drush_utils.rederiver:
+    class: \Drupal\islandora_drush_utils\Commands\Rederive
+    arguments:
+      - '@islandora.utils'
+      - '@entity_type.manager'
+      - '@logger.islandora_drush_utils'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.rederive_thumbnails:
+    class: \Drupal\islandora_drush_utils\Commands\GenerateThumbnails
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.islandora_drush_utils'
+      - '@database'
+    tags:
+      - name: drush.command
