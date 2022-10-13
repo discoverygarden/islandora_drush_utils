@@ -27,6 +27,7 @@ class GenerateThumbnailsTest extends GenerateDerivativeTestBase {
   /**
    * {@inheritdoc}
    */
+  // @codingStandardsIgnoreLine
   protected $strictConfigSchema = FALSE;
 
   /**
