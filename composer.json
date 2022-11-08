@@ -12,7 +12,7 @@
     "prefer-stable": true,
     "require": {
         "islandora/islandora": "^2",
-        "discoverygarden/dgi_i8_helper": "^3"
+        "discoverygarden/dgi_i8_helper": "^3 || ^4"
     },
     "extra": {
         "drush": {
