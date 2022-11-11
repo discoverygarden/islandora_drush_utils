@@ -5,111 +5,118 @@
  * General hook implementations.
  */
 
-
 /**
  * Implements hook_batch_alter().
  */
-function islandora_drush_utils_batch_alter(&$batch)
-{
-    // Better preservation messsaging.
-    foreach ($batch['sets'] as &$set) {
-        if (!isset($set['operations'])) {
-            continue;
-        }
-        foreach ($set['operations'] as $operation_structure) {
-            $operation = reset($operation_structure);
-            // This can be either an array, or a string like
-            // '\Drupal\migrate_tools\MigrateBatchExecutable::batchProcessImport'.
-            if (is_array($operation)) {
-                $operator = reset($operation);
-            } else {
-                $operator = $operation;
-            }
-            // @XXX: this is the most identifying part of this batch.
-            if ($operator instanceof Exporter) {
-                $set['title'] = t('Updating the repository');
-            }
-        }
+function islandora_drush_utils_batch_alter(&$batch) {
+  // Better preservation messsaging.
+  foreach ($batch['sets'] as &$set) {
+    if (!isset($set['operations'])) {
+      continue;
     }
-  
-    // XXX: Batches performed under Drush 9 do not inherit the user of the
-    // caller, and Drush 9's "process.manager" service is not easily
-    // overridable so as to be able to override... SO: Let's wrap all batch
-    // operations passing through the CLI if they have been submitted as an
-    // authenticated user, to make them run as said authenticated user.
-    // Somewhat associated with Drush 9's whole dropping-support-for-the-"--user"
-    // -argument business...
-    // @see https://github.com/drush-ops/drush/issues/3396
-    if (PHP_SAPI !== 'cli') {
-        return;
+    foreach ($set['operations'] as $operation_structure) {
+      $operation = reset($operation_structure);
+      // This can be either an array, or a string like
+      // '\Drupal\migrate_tools\MigrateBatchExecutable::batchProcessImport'.
+      if (is_array($operation)) {
+        $operator = reset($operation);
+      }
+      else {
+        $operator = $operation;
+      }
+      // @XXX: this is the most identifying part of this batch.
+      if ($operator instanceof Exporter) {
+        $set['title'] = t('Updating the repository');
+      }
     }
-  
-    $logger = \Drupal::logger('islandora_drush_utils');
-    $user = \Drupal::currentUser();
-    if (!$user->isAuthenticated()) {
-        $logger->debug('Non-authenticated batch; skipping @wrapper wrapping...', [
+  }
+
+  // XXX: Batches performed under Drush 9 do not inherit the user of the
+  // caller, and Drush 9's "process.manager" service is not easily
+  // overridable so as to be able to override... SO: Let's wrap all batch
+  // operations passing through the CLI if they have been submitted as an
+  // authenticated user, to make them run as said authenticated user.
+  // Somewhat associated with Drush 9's whole dropping-support-for-the-"--user"
+  // -argument business...
+  // @see https://github.com/drush-ops/drush/issues/3396
+  if (PHP_SAPI !== 'cli') {
+    return;
+  }
+
+  $logger = \Drupal::logger('islandora_drush_utils');
+  $user = \Drupal::currentUser();
+  if (!$user->isAuthenticated()) {
+    $logger->debug('Non-authenticated batch; skipping @wrapper wrapping...', [
+      '@wrapper' => '_islandora_drush_utils_user_wrapped_batch_op',
+    ]);
+    return;
+  }
+
+  $namer = function ($callable) {
+    // Adapted from https://stackoverflow.com/a/42954492
+    if (is_string($callable)) {
+      return trim($callable);
+    }
+    elseif (is_array($callable)) {
+      if (is_object($callable[0])) {
+        return sprintf("(%s instance)::%s", get_class($callable[0]),
+          trim($callable[1]));
+      }
+      else {
+        return sprintf("%s::%s", trim($callable[0]), trim($callable[1]));
+      }
+    }
+    elseif ($callable instanceof Closure) {
+      return 'closure';
+    }
+    else {
+      return 'unknown';
+    }
+  };
+
+  $wrap_op = function ($op) use ($user, $logger, $namer) {
+    $func = reset($op);
+    if ($func !== '_islandora_drush_utils_user_wrapped_batch_op') {
+      $logger->debug('Wrapping @func with @wrapper to maintain the user (@uid).',
+        [
+          '@func' => $namer($func),
           '@wrapper' => '_islandora_drush_utils_user_wrapped_batch_op',
+          '@uid' => $user->id(),
         ]);
-        return;
+      return [
+        '_islandora_drush_utils_user_wrapped_batch_op',
+        [
+          $user->id(),
+          $op,
+        ],
+      ];
     }
-  
-    $namer = function ($callable) {
-        // Adapted from https://stackoverflow.com/a/42954492
-        if (is_string($callable)) {
-            return trim($callable);
-        } elseif (is_array($callable)) {
-            if (is_object($callable[0])) {
-                return sprintf("(%s instance)::%s", get_class($callable[0]), trim($callable[1]));
-            } else {
-                return sprintf("%s::%s", trim($callable[0]), trim($callable[1]));
-            }
-        } elseif ($callable instanceof Closure) {
-            return 'closure';
-        } else {
-            return 'unknown';
-        }
-    };
-  
-    $wrap_op = function ($op) use ($user, $logger, $namer) {
-        $func = reset($op);
-        if ($func !== '_islandora_drush_utils_user_wrapped_batch_op') {
-            $logger->debug('Wrapping @func with @wrapper to maintain the user (@uid).', [
-              '@func' => $namer($func),
-              '@wrapper' => '_islandora_drush_utils_user_wrapped_batch_op',
-              '@uid' => $user->id(),
-            ]);
-            return [
-              '_islandora_drush_utils_user_wrapped_batch_op',
-              [
-                $user->id(),
-                $op,
-              ],
-            ];
-        } else {
-            return $op;
-        }
-    };
-  
-    foreach ($batch['sets'] as &$set) {
-        $set['operations'] = array_map($wrap_op, $set['operations']);
+    else {
+      return $op;
     }
-    // XXX: Clean up the reference.
-    unset($set);
+  };
+
+  foreach ($batch['sets'] as &$set) {
+    $set['operations'] = array_map($wrap_op, $set['operations']);
+  }
+  // XXX: Clean up the reference.
+  unset($set);
 }
-  
+
 /**
  * Wrap batch op with user.
  */
-function _islandora_drush_utils_user_wrapped_batch_op($id, $info, &$context)
-{
-    $switcher = \Drupal::service('account_switcher');
-    try {
-        $user = \Drupal::service('entity_type.manager')->getStorage('user')->load($id);
-        $switcher->switchTo($user);
-  
-        [$op, $args] = $info;
-        return call_user_func_array($op, array_merge($args, [&$context]));
-    } finally {
-        $switcher->switchBack();
-    }
+function _islandora_drush_utils_user_wrapped_batch_op($id, $info, &$context) {
+  $switcher = \Drupal::service('account_switcher');
+  try {
+    $user = \Drupal::service('entity_type.manager')
+      ->getStorage('user')
+      ->load($id);
+    $switcher->switchTo($user);
+
+    [$op, $args] = $info;
+    return call_user_func_array($op, array_merge($args, [&$context]));
+  } finally {
+    $switcher->switchBack();
+  }
 }
