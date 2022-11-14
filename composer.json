@@ -2,7 +2,7 @@
     "name": "discoverygarden/islandora_drush_utils",
     "description": "Utility Drush commands for Islandora.",
     "license": "GNU",
-    "type": "drupal-drush",
+    "type": "drupal-module",
     "authors": [
         {
             "name": "DGI"
