@@ -63,7 +63,7 @@ class Rederive extends DrushCommands {
    * @command islandora_drush_utils:rederive
    * @aliases islandora_drush_utils:r,idu:r
    *
-   * @dgi-i8-helper-user-wrap
+   * @islandora-drush-utils-user-wrap
    */
   public function rederive(array $options = [
     'source_uri' => 'http://pcdm.org/use#OriginalFile',
@@ -121,36 +121,46 @@ class Rederive extends DrushCommands {
         $sandbox['last_mid'] = $result;
         $media = $media_storage->load($result);
         if (!$media) {
-          $this->logger->debug('Failed to load media {media}; skipping.', [
-            'media' => $result,
-          ]);
+          $this->logger->debug(
+                'Failed to load media {media}; skipping.', [
+                  'media' => $result,
+                ]
+            );
           continue;
         }
         $node = $this->utils->getParentNode($media);
         if (!$node) {
-          $this->logger->debug('Failed to load identify/load node for media {media}; skipping.', [
-            'media' => $result,
-          ]);
+          $this->logger->debug(
+                'Failed to load identify/load node for media {media}; skipping.', [
+                  'media' => $result,
+                ]
+            );
           continue;
         }
-        $context['message'] = $this->t('Derivative reactions executed for node: @node, media: @media.', [
-          '@node' => $node->id(),
-          '@media' => $media->id(),
-        ]);
+        $context['message'] = $this->t(
+              'Derivative reactions executed for node: @node, media: @media.', [
+                '@node' => $node->id(),
+                '@media' => $media->id(),
+              ]
+          );
         $this->utils->executeDerivativeReactions(
-          DerivativeReaction::class,
-          $node,
-          $media
-        );
-        $this->logger->debug('Derivative reactions executed for {node}/{media}.', [
-          'node' => $node->id(),
-          'media' => $media->id(),
-        ]);
+              DerivativeReaction::class,
+              $node,
+              $media
+          );
+        $this->logger->debug(
+              'Derivative reactions executed for {node}/{media}.', [
+                'node' => $node->id(),
+                'media' => $media->id(),
+              ]
+          );
       }
       catch (\Exception $e) {
-        $this->logger->error('Encountered an exception: {exception}', [
-          'exception' => $e,
-        ]);
+        $this->logger->error(
+              'Encountered an exception: {exception}', [
+                'exception' => $e,
+              ]
+          );
       }
       $sandbox['completed']++;
       $context['finished'] = $sandbox['completed'] / $sandbox['total'];

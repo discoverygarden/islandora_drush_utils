@@ -20,7 +20,6 @@ class GenerateThumbnailsTest extends GenerateDerivativeTestBase {
   protected static $modules = [
     'context_ui',
     'islandora_image',
-    'dgi_i8_helper',
     'islandora_drush_utils',
   ];
 

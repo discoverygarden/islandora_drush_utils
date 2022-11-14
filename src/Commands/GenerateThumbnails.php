@@ -69,7 +69,7 @@ class GenerateThumbnails extends DrushCommands {
    * @command islandora_drush_utils:rederive_thumbnails
    * @aliases idu:rtn,rtn
    *
-   * @dgi-i8-helper-user-wrap
+   * @islandora-drush-utils-user-wrap
    */
   public function rederive(array $options = [
     'nids' => NULL,
@@ -113,12 +113,12 @@ class GenerateThumbnails extends DrushCommands {
     $batch = [
       'title' => $this->t('Regen TNs'),
       'operations' => [
+      [
+        '\Drupal\islandora_drush_utils\Services\GenerateThumbnailsBatchService::generateThumbnailOperation',
         [
-          '\Drupal\islandora_drush_utils\Services\GenerateThumbnailsBatchService::generateThumbnailOperation',
-          [
-            $entities,
-          ],
+          $entities,
         ],
+      ],
       ],
       'init_message' => $this->t('Starting'),
       'progress_message' => $this->t('@range of @total'),

@@ -5,4 +5,3 @@ package: DGI
 core_version_requirement: ^9
 dependencies:
   - islandora:islandora
-  - dgi_i8_helper:dgi_i8_helper
