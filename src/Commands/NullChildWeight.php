@@ -11,10 +11,9 @@ use Drupal\islandora\IslandoraUtils;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Input\InputOption;
 
 /**
- * Drush command to rederive thumbnails.
+ * Drush command to identify/update nodes with a mix of values in field_weight.
  */
 class NullChildWeight extends DrushCommands {
 
@@ -76,20 +75,23 @@ class NullChildWeight extends DrushCommands {
   }
 
   /**
-   * Identify update values when a mixture of NULLs and weights are present.
+   * Identify/update nodes if a mix of NULLs and integers exist in field_weight.
    *
+   * @param string $parent_nid
+   *   The ID of the parent node that is being searched through.
    * @param array $options
    *   Array of options passed by the command.
    *
    * @command islandora_drush_utils:null-child-weight-updater
    * @aliases islandora_drush_utils:ncwu,idu:ncwu
    * @option dry-run Avoid making changes to the system.
-   * @option parent-nid The parent being targeted for updates.
+   * @usage drush islandora_drush_utils:null-child-weight-updater --verbose
+   * --dry-run 10 Dry-run/simulate identifying and updating all children of node
+   * 10 that match the conditions.
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function update(array $options = [
-    'parent-nid' => InputOption::VALUE_REQUIRED,
+  public function update(string $parent_nid, array $options = [
     'dry-run' => FALSE,
   ]) {
     $this->options = $options;
@@ -98,42 +100,27 @@ class NullChildWeight extends DrushCommands {
     // in nature. That is, there are three scenarios that can occur:
     // 1. All children have NULL values in "field_weight".
     // 2. All children have integer values in "field_weight".
-    // 3. One or more children are NULL and one or more children have integer
-    // weights in "field_weight".
+    // 3. One or more children have NULL values in "field_weight" and one or
+    // more children have integer values in "field_weight".
     // Scenario number 3 is what is being targeted here.
-    $data_query = $this->database->select('node_field_data', 'd');
+    $query = $this->database->select('node', 'n');
 
-    $member_of_alias = $data_query->leftJoin('node__field_member_of', 'mo', '%alias.entity_id = d.nid');
-    $weight_alias = $data_query->leftJoin('node__field_weight', 'w', '%alias.entity_id = d.nid');
+    $mo_alias = $query->join('node__field_member_of', 'm', '%alias.entity_id = n.nid');
+    $weight_alias = $query->leftJoin('node__field_weight', 'w', '%alias.entity_id = n.nid');
+    $query->addExpression("max({$weight_alias}.field_weight_value)", 'max_weight');
 
-    $data_query->fields('d', ['nid']);
-    $data_query->fields($weight_alias, ['field_weight_value']);
+    $query->condition("{$mo_alias}.field_member_of_target_id", $parent_nid)
+      // The number of children counted is _not_ equal to the count of
+      // (non-null) weight values; and...
+      ->having("COUNT(n.nid) != COUNT({$weight_alias}.field_weight_value)")
+      // ... we have _some_ (non-null) weight values.
+      ->having("COUNT({$weight_alias}.field_weight_value) > 0");
+    // FALSE if doesn't match; otherwise, the max weight present.
+    $highest_weight = $query->execute()->fetchField();
 
-    $results = $data_query->condition("$member_of_alias.field_member_of_target_id", $this->options['parent-nid'])
-      ->orderBy("$weight_alias.field_weight_value")
-      ->execute()
-      ->fetchAllKeyed();
-    if (empty($results)) {
-      throw new \RuntimeException("No children found for the node ({$this->options['parent-nid']}).");
-    }
-
-    $applicable_null = FALSE;
-    $applicable_int = FALSE;
-    $highest_weight = 0;
-    $null_nids = [];
-    foreach ($results as $nid => $weight) {
-      if ($weight === NULL) {
-        $applicable_null = TRUE;
-        $null_nids[] = $nid;
-      }
-      else {
-        $applicable_int = TRUE;
-        $highest_weight = $weight;
-      }
-    }
-
-    if ($applicable_null && $applicable_int) {
+    if ($highest_weight) {
       if ($this->options['dry-run']) {
+        $null_nids = $this->getBaseQuery($parent_nid)->execute();
         $this->ourLogger->log('info', $this->t('Would have set weight on nids: @nids', [
           '@nids' => implode(', ', $null_nids),
         ]));
@@ -144,7 +131,7 @@ class NullChildWeight extends DrushCommands {
           'operations' => [
             [
               [$this, 'weightBatch'], [
-                $this->options['parent-nid'],
+                $parent_nid,
                 $highest_weight + 1,
               ],
             ],
@@ -170,10 +157,7 @@ class NullChildWeight extends DrushCommands {
    * @hook validate islandora_drush_utils:null-child-weight-updater
    */
   public function validateUpdate(CommandData $command_data) {
-    $parent_nid = $command_data->input()->getOption('parent-nid');
-    if (!$parent_nid) {
-      throw new \RuntimeException('The "parent-nid" option must be defined.');
-    }
+    $parent_nid = $command_data->input()->getArgument('parent_nid');
 
     $parent = $this->entityTypeManager->getStorage('node')->load($parent_nid);
     if (!$parent instanceof NodeInterface) {
@@ -186,7 +170,24 @@ class NullChildWeight extends DrushCommands {
   }
 
   /**
-   * Batch for re-deriving derivatives.
+   * Helper to get the base query to be used to find NULL children.
+   *
+   * @param string $parent_nid
+   *   The ID of the parent node that is being searched through.
+   *
+   * @return \Drupal\Core\Entity\Query\QueryInterface
+   *   The query to be run.
+   */
+  protected function getBaseQuery($parent_nid) {
+    $node_storage = $this->entityTypeManager->getStorage('node');
+    $base_query = $node_storage->getQuery()
+      ->condition('field_member_of', $parent_nid)
+      ->notExists('field_weight');
+    return $base_query;
+  }
+
+  /**
+   * Batch for updating NULL field_weight values where siblings are integers.
    *
    * @param string $parent_nid
    *   The node ID of the parent object being targeted.
@@ -197,10 +198,8 @@ class NullChildWeight extends DrushCommands {
    */
   public function weightBatch(string $parent_nid, int $starting_weight, &$context) {
     $sandbox =& $context['sandbox'];
-    $node_storage = $this->entityTypeManager->getStorage('node');
-    $base_query = $node_storage->getQuery()
-      ->condition('field_member_of', $parent_nid)
-      ->notExists('field_weight');
+
+    $base_query = $this->getBaseQuery($parent_nid);
     if (!isset($sandbox['total'])) {
       $count_query = clone $base_query;
       $sandbox['total'] = $count_query->count()->execute();
@@ -222,7 +221,7 @@ class NullChildWeight extends DrushCommands {
     foreach ($base_query->execute() as $result) {
       try {
         $sandbox['last_nid'] = $result;
-        $node = $node_storage->load($result);
+        $node = $this->entityTypeManager->getStorage('node')->load($result);
         if (!$node) {
           $this->logger->debug(
             'Failed to load node {node}; skipping.', [
