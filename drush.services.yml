@@ -43,3 +43,12 @@ services:
     arguments:
       - '@logger.islandora_drush_utils'
       - false
+  islandora_drush_utils.null_child_weight_updater:
+    class: \Drupal\islandora_drush_utils\Commands\NullChildWeight
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+      - '@islandora.utils'
+      - '@logger.islandora_drush_utils'
+    tags:
+      - name: drush.command
