@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Contains a set of utility Drush commands for Islandora. These include:
+Contains a set of utility Drush commands for Islandora.
 
 ## Features
 
