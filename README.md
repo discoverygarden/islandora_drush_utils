@@ -76,6 +76,7 @@ Having problems or solved a problem? Contact [discoverygarden](http://support.di
 This project has been sponsored by:
 
 * [discoverygarden](http://wwww.discoverygarden.ca)
+* [FLVC] @todo: Add link
 
 ## Development
 
