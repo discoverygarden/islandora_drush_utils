@@ -2,7 +2,15 @@
 
 ## Introduction
 
-Contains a set of utility Drush commands.
+Contains a set of utility Drush commands for Islandora. These include:
+
+## Features
+
+- Deleter command to recursively delete all related nodes, media, and files.
+- Generate thumbnails command to re-derive thumbnails for nodes.
+- Null child weight command to identify and update nodes with a mix of null and integer values in field_weight.
+- Re-derive command to re-derive all derivatives for a set of nodes.
+- A user wrapper to replace the legacy [--user](https://github.com/drush-ops/drush/issues/3396) drush wrapper to support user in drush commands.
 
 ## Requirements
 
@@ -15,6 +23,49 @@ This module requires the following modules/libraries:
 Install as usual, see
 [this]( https://www.drupal.org/docs/extending-drupal/installing-modules) for
 further information.
+
+## Usage/Examples
+
+### Deleter
+
+```shell
+drush islandora_drush_utils:delete-recursively -vvv --dry-run --empty 7,11 --user=islandora
+```
+
+Given a comma-separated list of nodes to target, this command performs a breadth-first search to find all descendent nodes and deletes them, including their related media, and marks files related to media as "temporary" such that they become eligible for garbage collection by Drupal.
+
+### Generate thumbnails
+
+```shell
+drush islandora_drush_utils:rederive_thumbnails --model=Image -vvv --nids=7,11 --user=islandora
+```
+
+Given a comma-separated list of nodes to target, this command will re-generate thumbnails for the target model. A file containing comma-separated nids can also be provided as input.
+
+### Re-derive
+
+```shell
+drush islandora_drush_utils:rederive -vvv --user=islandora
+```
+
+This command re-generates all derivatives on the website. It is possible to define which "media use" term should be used as the source for derivative generation. This defaults to [Original file](http://pcdm.org/use#OriginalFile)
+
+### Null child weight
+
+```shell
+drush islandora_drush_utils:null-child-weight-updater --verbose
+--dry-run 10 --user=islandora
+```
+
+This command identifies and updates nodes that have a mix of null and integer values in field_weight.
+
+### User wrapper
+
+```shell
+--user=1
+```
+
+Before Drush 9, there was a "--user" option that could be used to run commands as other users. Here, a new  "@islandora_drush_utils-user-wrap" annotation is provided, which can be used to allow the --user option in commands.
 
 ## Troubleshooting/Issues
 
