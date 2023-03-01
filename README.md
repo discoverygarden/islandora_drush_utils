@@ -1,8 +1,23 @@
 # Islandora Utilities
 
+![](https://github.com/discoverygarden/islandora_drush_utils/actions/workflows/auto-lint.yml/badge.svg)
+![](https://github.com/discoverygarden/islandora_drush_utils/actions/workflows/auto-semver.yml/badge.svg)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 ## Introduction
 
 Contains a set of utility Drush commands for Islandora.
+
+## Table of Contents
+
+* [Features](#features)
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Troubleshooting/Issues](#troubleshootingissues)
+* [Maintainers and Sponsors](#maintainers--sponsors)
+* [Development/Contribution](#development--contribution)
+* [License](#license)
 
 ## Features
 
@@ -24,7 +39,7 @@ Install as usual, see
 [this]( https://www.drupal.org/docs/extending-drupal/installing-modules) for
 further information.
 
-## Usage/Examples
+## Usage
 
 ### Deleter
 
@@ -71,14 +86,17 @@ Before Drush 9, there was a "--user" option that could be used to run commands a
 
 Having problems or solved a problem? Contact [discoverygarden](http://support.discoverygarden.ca).
 
-## Maintainers/Sponsors
+## Maintainers / Sponsors
 
-This project has been sponsored by:
+Current maintainers:
 
-* [discoverygarden](http://wwww.discoverygarden.ca)
-* [FLVC] @todo: Add link
+* [discoverygarden](http://www.discoverygarden.ca)
 
-## Development
+Sponsors:
+
+* [FLVC](@todo Add link)
+
+## Development / Contribution
 
 If you would like to contribute to this module, please check out our helpful
 [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers)
