@@ -15,8 +15,8 @@ Contains a set of utility Drush commands for Islandora.
 * [Installation](#installation)
 * [Usage](#usage)
 * [Troubleshooting/Issues](#troubleshootingissues)
-* [Maintainers and Sponsors](#maintainers--sponsors)
-* [Development/Contribution](#development--contribution)
+* [Maintainers and Sponsors](#maintainers-and-sponsors)
+* [Development/Contribution](#developmentcontribution)
 * [License](#license)
 
 ## Features
@@ -86,7 +86,7 @@ Before Drush 9, there was a "--user" option that could be used to run commands a
 
 Having problems or solved a problem? Contact [discoverygarden](http://support.discoverygarden.ca).
 
-## Maintainers / Sponsors
+## Maintainers and Sponsors
 
 Current maintainers:
 
@@ -96,7 +96,7 @@ Sponsors:
 
 * [FLVC](@todo Add link)
 
-## Development / Contribution
+## Development/Contribution
 
 If you would like to contribute to this module, please check out our helpful
 [Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers)
