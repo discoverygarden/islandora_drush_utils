@@ -43,7 +43,7 @@ further information.
 
 ### Deleter
 
-```shell
+```bash
 drush islandora_drush_utils:delete-recursively -vvv --dry-run --empty 7,11 --user=islandora
 ```
 
@@ -51,7 +51,7 @@ Given a comma-separated list of nodes to target, this command performs a breadth
 
 ### Generate thumbnails
 
-```shell
+```bash
 drush islandora_drush_utils:rederive_thumbnails --model=Image -vvv --nids=7,11 --user=islandora
 ```
 
@@ -59,7 +59,7 @@ Given a comma-separated list of nodes to target, this command will re-generate t
 
 ### Re-derive
 
-```shell
+```bash
 drush islandora_drush_utils:rederive -vvv --user=islandora
 ```
 
@@ -67,7 +67,7 @@ This command re-generates all derivatives on the website. It is possible to defi
 
 ### Null child weight
 
-```shell
+```bash
 drush islandora_drush_utils:null-child-weight-updater --verbose
 --dry-run 10 --user=islandora
 ```
@@ -76,7 +76,7 @@ This command identifies and updates nodes that have a mix of null and integer va
 
 ### User wrapper
 
-```shell
+```bash
 --user=1
 ```
 
