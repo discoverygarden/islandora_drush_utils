@@ -99,7 +99,7 @@ Sponsors:
 ## Development/Contribution
 
 If you would like to contribute to this module, please check out github's helpful
-[Documentation for Developers](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) to create an issue or pull request and/or
+[Contributing to projects](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) documentation and Islandora community's [Documention for developers](https://islandora.github.io/documentation/contributing/CONTRIBUTING/#github-issues) to create an issue or pull request and/or
 contact [discoverygarden](http://support.discoverygarden.ca).
 
 ## License
