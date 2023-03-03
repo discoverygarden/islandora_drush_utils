@@ -98,10 +98,9 @@ Sponsors:
 
 ## Development/Contribution
 
-If you would like to contribute to this module, please check out our helpful
-[Documentation for Developers](https://github.com/Islandora/islandora/wiki#wiki-documentation-for-developers)
-info, [Developers](http://islandora.ca/developers) section on Islandora.ca and
-contact [discoverygarden](http://www.discoverygarden.ca).
+If you would like to contribute to this module, please check out github's helpful
+[Documentation for Developers](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) to create an issue or pull request and/or
+contact [discoverygarden](http://support.discoverygarden.ca).
 
 ## License
 
