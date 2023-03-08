@@ -94,7 +94,7 @@ Current maintainers:
 
 Sponsors:
 
-* [FLVC](@todo Add link)
+* [FLVC](https://www.flvc.org/)
 
 ## Development/Contribution
 
