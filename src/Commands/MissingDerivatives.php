@@ -2,11 +2,9 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
-use Consolidation\AnnotatedCommand\CommandData;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
 use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
@@ -54,6 +52,8 @@ class MissingDerivatives extends DrushCommands {
    *   The entity type manager service.
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger to which to log.
+   * @param \Drupal\dgi_standard_derivative_examiner\Utility\Examiner $examiner
+   *   Service to examine islandora based nodes.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, Examiner $examiner) {
     $this->entityTypeManager = $entity_type_manager;
