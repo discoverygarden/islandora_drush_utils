@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
 
 /**
- * Drush command to identify/update nodes with a mix of values in field_weight.
+ * Drush command to identify missing derivatives.
  */
 class MissingDerivatives extends DrushCommands {
 
@@ -39,13 +39,6 @@ class MissingDerivatives extends DrushCommands {
   protected Examiner $examiner;
 
   /**
-   * The options for the Drush command.
-   *
-   * @var array|null
-   */
-  protected ?array $options;
-
-  /**
    * Constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -64,21 +57,13 @@ class MissingDerivatives extends DrushCommands {
   /**
    * Identify any objects with missing derivatives.
    *
-   * @param array $options
-   *   Array of options passed by the command.
-   *
    * @command islandora_drush_utils:missing-derivatives
    * @aliases islandora_drush_utils:md,idu:md
-   * @option source_uri Specify the media term to query for.
    * @usage drush islandora_drush_utils:missing-derivatives --verbose
-   * --source_uri 'http://pcdm.org/use#OriginalFile'
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function update(array $options = [
-    'source_uri' => 'http://pcdm.org/use#OriginalFile',
-  ]) {
-    $this->options = $options;
+  public function update() {
     $node_count = $this->getBaseQuery()->count()->execute();
 
     if ($node_count) {
@@ -102,7 +87,7 @@ class MissingDerivatives extends DrushCommands {
       $this->logger->log(
         'info',
         $this->t(
-          'No Nodes of type islandora_object found. Exiting without further processing.'
+          'No nodes of type islandora_object found. Exiting without further processing.'
         )
       );
     }
@@ -110,7 +95,7 @@ class MissingDerivatives extends DrushCommands {
   }
 
   /**
-   * Helper to get the base query to be used to find NULL children & count.
+   * Helper to get the base query to be used.
    *
    * @return \Drupal\Core\Entity\Query\QueryInterface
    *   The query to be run.
