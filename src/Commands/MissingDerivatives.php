@@ -7,10 +7,11 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
+use Drupal\Core\Entity\Query\Sql\Query;
 use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
 
 /**
- * Drush command to identify/update nodes with a mix of values in field_weight.
+ * Drush command to identify missing derivatives.
  */
 class MissingDerivatives extends DrushCommands {
 
@@ -29,7 +30,7 @@ class MissingDerivatives extends DrushCommands {
    *
    * @var \Psr\Log\LoggerInterface
    */
-  protected $logger;
+  protected LoggerInterface $logger;
 
   /**
    * Examiner utility.
@@ -37,13 +38,6 @@ class MissingDerivatives extends DrushCommands {
    * @var \Drupal\dgi_standard_derivative_examiner\Utility\Examiner
    */
   protected Examiner $examiner;
-
-  /**
-   * The options for the Drush command.
-   *
-   * @var array|null
-   */
-  protected ?array $options;
 
   /**
    * Constructor.
@@ -64,21 +58,13 @@ class MissingDerivatives extends DrushCommands {
   /**
    * Identify any objects with missing derivatives.
    *
-   * @param array $options
-   *   Array of options passed by the command.
-   *
    * @command islandora_drush_utils:missing-derivatives
    * @aliases islandora_drush_utils:md,idu:md
-   * @option source_uri Specify the media term to query for.
    * @usage drush islandora_drush_utils:missing-derivatives --verbose
-   * --source_uri 'http://pcdm.org/use#OriginalFile'
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function update(array $options = [
-    'source_uri' => 'http://pcdm.org/use#OriginalFile',
-  ]) {
-    $this->options = $options;
+  public function update(): void {
     $node_count = $this->getBaseQuery()->count()->execute();
 
     if ($node_count) {
@@ -102,7 +88,7 @@ class MissingDerivatives extends DrushCommands {
       $this->logger->log(
         'info',
         $this->t(
-          'No Nodes of type islandora_object found. Exiting without further processing.'
+          'No nodes of type islandora_object found. Exiting without further processing.'
         )
       );
     }
@@ -110,17 +96,16 @@ class MissingDerivatives extends DrushCommands {
   }
 
   /**
-   * Helper to get the base query to be used to find NULL children & count.
+   * Helper to get the base query to be used.
    *
-   * @return \Drupal\Core\Entity\Query\QueryInterface
+   * @return \Drupal\Core\Entity\Query\Sql\Query
    *   The query to be run.
    */
-  protected function getBaseQuery() {
+  protected function getBaseQuery(): Query {
     // Get all nodes relevant.
-    $base_query = $this->entityTypeManager->getStorage('node')
+    return $this->entityTypeManager->getStorage('node')
       ->getQuery()
       ->condition('type', 'islandora_object');
-    return $base_query;
   }
 
   /**
@@ -129,7 +114,7 @@ class MissingDerivatives extends DrushCommands {
    * @param array|\DrushBatchContext $context
    *   Batch context.
    */
-  public function missingDerivatives(&$context) {
+  public function missingDerivatives(&$context): void {
     $sandbox =& $context['sandbox'];
     $base_query = $this->getBaseQuery();
 
