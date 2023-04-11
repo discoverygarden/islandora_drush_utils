@@ -30,7 +30,7 @@ class MissingDerivatives extends DrushCommands {
    *
    * @var \Psr\Log\LoggerInterface
    */
-  protected LoggerInterface $logger;
+  protected $logger;
 
   /**
    * Examiner utility.
@@ -98,10 +98,10 @@ class MissingDerivatives extends DrushCommands {
   /**
    * Helper to get the base query to be used.
    *
-   * @return \Drupal\Core\Entity\Query\Sql\Query
+   * @return \Drupal\Core\Entity\Query\QueryInterface
    *   The query to be run.
    */
-  protected function getBaseQuery(): Query {
+  protected function getBaseQuery(): QueryInterface {
     // Get all nodes relevant.
     return $this->entityTypeManager->getStorage('node')
       ->getQuery()
