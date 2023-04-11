@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
-use Drupal\Core\Entity\Query\Sql\Query;
 use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
 
 /**
