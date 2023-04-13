@@ -52,3 +52,11 @@ services:
       - '@logger.islandora_drush_utils'
     tags:
       - name: drush.command
+  islandora_drush_utils.missing_derivatives:
+    class: \Drupal\islandora_drush_utils\Commands\MissingDerivatives
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.islandora_drush_utils'
+      - '@dgi_standard_derivative_examiner.examiner'
+    tags:
+      - name: drush.command
