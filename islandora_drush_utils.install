@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Misc (un)installation and update hooks.
+ */
+
+use Discoverygarden\UpdateHelper;
+
+/**
+ * Ensure the islandora_drush_utils module is enabled.
+ */
+function islandora_drush_utils_update_9100() {
+  UpdateHelper::ensureModuleEnabled('dgi_standard_derivative_examiner');
+}
