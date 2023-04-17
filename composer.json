@@ -12,6 +12,7 @@
     "prefer-stable": true,
     "require": {
         "islandora/islandora": "^2",
+        "discoverygarden/update-helper": "^1",
         "discoverygarden/dgi_standard_derivative_examiner": "^1"
     },
     "extra": {
