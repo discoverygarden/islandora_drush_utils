@@ -68,4 +68,3 @@ services:
       - '@logger.islandora_drush_utils'
     tags:
       - { name: drush.command }
-

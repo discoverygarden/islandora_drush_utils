@@ -12,7 +12,8 @@ use Psr\Log\LoggerInterface;
 /**
  * BulkPublishUnpublish commands.
  *
- * These commands publish/unpublish children and related media of given collection nids.
+ * These commands publish/unpublish children and related media
+ * of given collection nids.
  * They do not affect the actual collection node.
  */
 class PublishUnpublishCollections extends DrushCommands {
@@ -144,7 +145,6 @@ class PublishUnpublishCollections extends DrushCommands {
         ]);
 
         $ancestors = $this->utils->findAncestors($node);
-        $test = array_intersect($ancestors, $ancestor_nids);
         if (count(array_intersect($ancestors, $ancestor_nids)) > 0) {
           if ($publish) {
             $node->setPublished()->save();
