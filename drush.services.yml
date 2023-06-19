@@ -63,8 +63,6 @@ services:
   islandora_drush_utils.derivatives_generator:
     class: \Drupal\islandora_drush_utils\Commands\DerivativesGenerator
     arguments:
-      - '@islandora.utils'
       - '@entity_type.manager'
-      - '@logger.islandora_drush_utils'
     tags:
       - name: drush.command
