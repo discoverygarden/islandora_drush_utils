@@ -68,7 +68,7 @@ class DerivativesGenerator extends DrushCommands {
    *
    * @command islandora_drush_utils:derivativesgenerator
    * @aliases islandora_drush_utils:dg,idu:dg
-   * http://pcdm.org/use#ThumbnailImage
+   *
    * @islandora-drush-utils-user-wrap
    */
   public function derivativesGenerator(array $options = [

@@ -8,7 +8,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class DerivativesGeneratorBatchService implores the generation of thumbnails.
+ * Class DerivativesGeneratorBatchService implores generation of derivatives.
  */
 class DerivativesGeneratorBatchService implements ContainerInjectionInterface {
 
