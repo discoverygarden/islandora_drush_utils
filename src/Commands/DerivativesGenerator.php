@@ -59,11 +59,12 @@ class DerivativesGenerator extends DrushCommands {
    * Derivatives generator, generate derivatives based on source_uri, nids,
    * or model_name. Only provide one input for evaluation.
    *
-   * @option media_use_uri The "media use" term for which to rederive
-   *   derivatives, based on actions configured around this URI.
+   * @option media_use_uri Required, the "media use" term for which to re-derive
+   *   derivatives, based on actions configured around this URI. Defaults to
+   *   http://pcdm.org/use#ThumbnailImage.
    * @option nids A comma seperated list of node IDs for which to rederive
    *   derivatives, or a file path to a file containing a list of node IDs.
-   * @option model_name A comma seperated list of human readable model names
+   * @option model_name A human-readable model names (IE: "Video")
    *   for which to re-derive.
    *
    * @command islandora_drush_utils:derivativesgenerator
