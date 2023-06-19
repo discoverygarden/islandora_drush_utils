@@ -36,6 +36,22 @@ class DerivativesGenerator extends DrushCommands {
   }
 
   /**
+   * Retrieve the base query for a given URI.
+   *
+   * @param string $uri
+   *   The URI to query for.
+   * @return mixed
+   *   The query object.
+   */
+  private function getBaseQuery(string $uri) {
+    return $this->entityTypeManager->getStorage('node')
+      ->getQuery()
+      ->condition('type', 'islandora_object')
+      ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri)
+      ->sort('nid', 'ASC');
+  }
+
+  /**
    * Derivatives generator, generate derivatives based on source_uri, nids,
    * or model_name. Only provide one input for evaluation.
    *
@@ -64,12 +80,7 @@ class DerivativesGenerator extends DrushCommands {
     if (empty($options['nids'])) {
       if (!empty($options['model_uri'])) {
         // Get all nodes relevant.
-        $entities = $this->entityTypeManager->getStorage('node')
-          ->getQuery()
-          ->condition('type', 'islandora_object')
-          ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $options['model_uri'])
-          ->sort('nid', 'ASC')
-          ->execute();
+        $entities = $this->getBaseQuery($options['model_uri'])->execute();
       }
 
       if (!empty($options['model_name'])) {
@@ -84,12 +95,7 @@ class DerivativesGenerator extends DrushCommands {
         $term_data = $term->get('field_external_uri')->getValue()[0];
 
         if (!empty($term_data['uri'])) {
-          $entities = \Drupal::service('entity_type.manager')->getStorage('node')
-            ->getQuery()
-            ->condition('type', 'islandora_object')
-            ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $term_data['uri'])
-            ->sort('nid', 'ASC')
-            ->execute();
+          $entities = $this->getBaseQuery($term_data['uri'])->execute();
         }
       }
     }
