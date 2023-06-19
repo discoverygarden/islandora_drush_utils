@@ -56,54 +56,82 @@ class DerivativesGenerator extends DrushCommands {
   }
 
   /**
-   * Derivatives generator, generate derivatives based on source_uri, node_ids,
-   * and/or model_uri. If no 'source_uri' is provided, the default is
-   * 'http://pcdm.org/use#OriginalFile'.
+   * Derivatives generator, generate derivatives based on source_uri, nids,
+   * or model_name. Only provide one input for evaluation.
    *
-   * @option source_uri The "media use" term for which to rederive derivatives.
-   * @option node_ids A comma seperated list of node IDs for which to rederive
-   *   derivatives.
-   * @option models A comma seperated list of models for which to rederive
-   *   derivatives.
-   * @option machine_name
-   *   A comma seperated list of machine names (node UUID's) to target for
-   *   rederivation.
+   * @option media_use_uri The "media use" term for which to rederive
+   *   derivatives, based on actions configured around this URI.
+   * @option nids A comma seperated list of node IDs for which to rederive
+   *   derivatives, or a file path to a file containing a list of node IDs.
+   * @option model_name A comma seperated list of human readable model names
+   *   for which to re-derive.
    *
    * @command islandora_drush_utils:derivativesgenerator
    * @aliases islandora_drush_utils:dg,idu:dg
-   *
+   * http://pcdm.org/use#ThumbnailImage
    * @islandora-drush-utils-user-wrap
    */
   public function derivativesGenerator(array $options = [
-    'source_uri' => 'http://pcdm.org/use#OriginalFile',
-    'node_ids' => '',
-    'model_uri' => '',
-    'machine_name' => '',
+    'media_use_uri' => 'http://pcdm.org/use#ThumbnailImage',
+    'nids' => '',
+    'model_name' => '',
   ]) {
-    $source_uri_taxonomy_ids = $this->entityTypeManager
-      ->getStorage('taxonomy_term')
-      ->getQuery()
-      ->condition('field_external_uri', $options['source_uri'])
-      ->execute();
-    if (empty($source_uri_taxonomy_ids)) {
-      throw new \Exception("The provided 'source_uri' ({$options['source_uri']}) did not match any taxonomy terms 'field_external_uri' field.");
+    $entities = [];
+
+    if (is_null($options['nids'])) {
+      if (!is_null($options['model_name'])) {
+        $uri_id = $this->entityTypeManager->getStorage('taxonomy_term')
+          ->getQuery()
+          ->condition('name', $options['model_name'])
+          ->execute();
+
+        if (!is_null($uri_id)) {
+          $uri_id = reset($uri_id);
+          $uri = $this->entityTypeManager->getStorage('taxonomy_term')->load($uri_id);
+          $uri = $uri->get('field_external_uri')->getValue()[0];
+          $uri = reset($uri);
+
+          // Get all nodes relevant.
+          $entities = $this->entityTypeManager->getStorage('node')
+            ->getQuery()
+            ->condition('type', 'islandora_object')
+            ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri)
+            ->sort('nid', 'ASC')
+            ->execute();
+        }
+      }
+    }
+    else {
+      // If a file path is provided, parse it.
+      if (is_file($options['nids'])) {
+        if (is_readable($options['nids'])) {
+          $entities = trim(file_get_contents($options['nids']));
+          $entities = explode("\n", $entities);
+        }
+      }
+      else {
+        $entities = explode(',', $options['nids']);
+      }
     }
 
-    $model_uri_taxonomy_ids = $this->entityTypeManager
-      ->getStorage('taxonomy_term')
-      ->getQuery()
-      ->condition('field_external_uri', explode(",", $options['model_uri']))
-      ->execute();
-
+    // Set up batch.
     $batch = [
-      'title' => $this->t('(Re)deriving derivatives...'),
+      'title' => $this->t('Regenerate derivatives'),
       'operations' => [
         [
-          [$this, 'deriveBatch'],
-          [$source_uri_taxonomy_ids, $options['node_ids'], $model_uri_taxonomy_ids]
-        ]
+          '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperation',
+          [
+            $entities,
+            $options['media_use_uri']
+          ],
+        ],
       ],
+      'init_message' => $this->t('Starting'),
+      'progress_message' => $this->t('@range of @total'),
+      'error_message' => $this->t('An error occurred'),
+      'finished' => '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperationFinished',
     ];
+
     drush_op('batch_set', $batch);
     drush_op('drush_backend_batch_process');
   }
