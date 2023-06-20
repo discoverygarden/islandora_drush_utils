@@ -5,10 +5,7 @@ namespace Drupal\islandora_drush_utils\Commands;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\islandora\IslandoraUtils;
-use Drupal\islandora\Plugin\ContextReaction\DerivativeReaction;
 use Drush\Commands\DrushCommands;
-use Psr\Log\LoggerInterface;
 
 /**
  * Drush command implementation.
@@ -40,6 +37,7 @@ class DerivativesGenerator extends DrushCommands {
    *
    * @param string $uri
    *   The URI to query for.
+   *
    * @return mixed
    *   The query object.
    */
@@ -52,8 +50,7 @@ class DerivativesGenerator extends DrushCommands {
   }
 
   /**
-   * Derivatives generator, generate derivatives based on source_uri, nids,
-   * or model_name. Only provide one input for evaluation.
+   * Generate derivatives based on source_uri, nids,or model_name.
    *
    * @option media_use_uri Required, the "media use" term for which to re-derive
    *   derivatives, based on actions configured around this URI. Defaults to
@@ -120,7 +117,7 @@ class DerivativesGenerator extends DrushCommands {
           '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperation',
           [
             $entities,
-            $options['media_use_uri']
+            $options['media_use_uri'],
           ],
         ],
       ],

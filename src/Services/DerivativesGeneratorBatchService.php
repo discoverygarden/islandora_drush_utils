@@ -45,6 +45,8 @@ class DerivativesGeneratorBatchService implements ContainerInjectionInterface {
    *
    * @param \Drupal\node\NodeInterface[] $nodes
    *   An array of nodes to process.
+   * @param string $media_use_uri
+   *   The media use URI to use for processing.
    * @param object $context
    *   Context for operations.
    */
