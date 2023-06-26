@@ -83,17 +83,17 @@ class GenerateThumbnails extends DrushCommands {
       $uri_id = $this->storage->getStorage('taxonomy_term')
         ->getQuery()
         ->condition('name', $options['model'])
+        ->condition('vid', 'islandora_models')
         ->execute();
       $uri_id = reset($uri_id);
       $uri = $this->storage->getStorage('taxonomy_term')->load($uri_id);
       $uri = $uri->get('field_external_uri')->getValue()[0];
-      $uri = reset($uri);
 
       // Get all nodes relevant.
       $entities = $this->storage->getStorage('node')
         ->getQuery()
         ->condition('type', $options['bundle'])
-        ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri)
+        ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri['uri'])
         ->sort('nid', 'ASC')
         ->execute();
     }
@@ -114,16 +114,17 @@ class GenerateThumbnails extends DrushCommands {
       'title' => $this->t('Regen TNs'),
       'operations' => [
       [
-        '\Drupal\islandora_drush_utils\Services\GenerateThumbnailsBatchService::generateThumbnailOperation',
+        '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperation',
         [
           $entities,
+          'http://pcdm.org/use#ThumbnailImage',
         ],
       ],
       ],
       'init_message' => $this->t('Starting'),
       'progress_message' => $this->t('@range of @total'),
       'error_message' => $this->t('An error occurred'),
-      'finished' => '\Drupal\islandora_drush_utils\Services\GenerateThumbnailsBatchService::generateThumbnailOperationFinished',
+      'finished' => '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperationFinished',
     ];
     batch_set($batch);
     drush_backend_batch_process();

@@ -8,9 +8,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class GenerateThumbnailsBatchService implores the generation of thumbnails.
+ * Class DerivativesGeneratorBatchService implores generation of derivatives.
  */
-class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
+class DerivativesGeneratorBatchService implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
 
@@ -45,26 +45,16 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
    *
    * @param \Drupal\node\NodeInterface[] $nodes
    *   An array of nodes to process.
+   * @param string $media_use_uri
+   *   The media use URI to use for processing.
    * @param object $context
    *   Context for operations.
    */
-  public static function generateThumbnailOperation(array $nodes, &$context) {
+  public static function generateDerivativesOperation(array $nodes, $media_use_uri, &$context) {
     $sandbox = &$context['sandbox'];
     $limit = 10;
 
     if (!isset($sandbox['total'])) {
-      // Filter out nodes that do not have a TN.
-      $nodes = array_filter(
-            $nodes, function ($nid) {
-                $ret = \Drupal::service('entity_type.manager')->getStorage('media')
-                  ->getQuery()
-                  ->condition('field_media_use.entity:taxonomy_term.field_external_uri.uri', 'http://pcdm.org/use#ThumbnailImage')
-                  ->condition('field_media_of', $nid)
-                  ->execute();
-                return empty($ret);
-            }
-        );
-
       if (empty($nodes)) {
         $context['message'] = t('Found no nodes to process');
         $context['results']['error'] = TRUE;
@@ -83,18 +73,18 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
 
     $end = $sandbox['total'] < $limit ? $sandbox['total'] : $sandbox['offset'] + $limit;
     $context['message'] = t(
-          'Processing @start to @end of @total', [
-            '@start' => $sandbox['offset'],
-            '@end' => $end,
-            '@total' => $sandbox['total'],
-          ]
-      );
+      'Processing @start to @end of @total', [
+        '@start' => $sandbox['offset'],
+        '@end' => $end,
+        '@total' => $sandbox['total'],
+      ]
+    );
 
     try {
       $actions = \Drupal::service('entity_type.manager')
         ->getStorage('action')
         ->getQuery()
-        ->condition('configuration.derivative_term_uri', 'http://pcdm.org/use#ThumbnailImage')
+        ->condition('configuration.derivative_term_uri', $media_use_uri)
         ->execute();
 
       $actions = \Drupal::service('entity_type.manager')
@@ -114,11 +104,11 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
 
           if (stripos($action_id, $node_model) !== FALSE) {
             $context['message'] = t(
-                  'Performing @action on "@id"', [
-                    '@action' => $action->id(),
-                    '@id' => $entity->id(),
-                  ]
-              );
+              'Performing @action on "@id"', [
+                '@action' => $action->id(),
+                '@id' => $entity->id(),
+              ]
+            );
             try {
               $action->execute([$entity]);
               $context['results']['nodes succeeded'][] = $entity->id();
@@ -128,31 +118,31 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
               $context['results']['error'] = TRUE;
               $context['results']['nodes failed'][] = $entity->id();
               $context['message'] = t(
-                    '@action on node "@id" failed', [
-                      '@action' => $action->id(),
-                      '@id' => $entity->id(),
-                    ]
-                );
+                '@action on node "@id" failed', [
+                  '@action' => $action->id(),
+                  '@id' => $entity->id(),
+                ]
+              );
             }
           }
         }
         $context['results']['count']++;
         if (!$performed_action) {
           $context['message'] = t(
-                'Unable to determine an action for node "@id"', [
-                  '@id' => $entity->id(),
-                ]
-            );
+            'Unable to determine an action for node "@id"', [
+              '@id' => $entity->id(),
+            ]
+          );
         }
       }
     }
     catch (\Exception $e) {
       $context['results']['error'] = TRUE;
       $context['message'] = t(
-            'Encountered an exception: @exception', [
-              '@exception' => $e,
-            ]
-        );
+        'Encountered an exception: @exception', [
+          '@exception' => $e,
+        ]
+      );
     }
     $sandbox['offset'] = $sandbox['offset'] + $limit;
     $context['finished'] = $sandbox['offset'] / $sandbox['total'];
@@ -164,40 +154,40 @@ class GenerateThumbnailsBatchService implements ContainerInjectionInterface {
    * @param bool $success
    *   Success of the operation.
    * @param array $results
-   *   Array of results for post processing.
+   *   Array of results for post-processing.
    * @param array $operations
    *   Array of operations.
    */
-  public static function generateThumbnailOperationFinished($success, array $results, array $operations) {
+  public static function generateDerivativesOperationFinished($success, array $results, array $operations) {
     if (!$success || $results['error']) {
       $error_operation = reset($operations);
       \Drupal::messenger()
         ->addMessage(
-            t(
-                'An error occurred while processing @operation with arguments : @args', [
-                  '@operation' => $error_operation[0],
-                  '@args' => print_r($error_operation[0], TRUE),
-                ]
-              )
+          t(
+            'An error occurred while processing @operation with arguments : @args', [
+              '@operation' => $error_operation[0],
+              '@args' => print_r($error_operation[0], TRUE),
+            ]
+          )
         );
     }
     if (!empty($results['nodes failed'])) {
       \Drupal::messenger()->addMessage(
-            t(
-                'The following nodes produced errors: \n @nodes', [
-                  '@nodes' => implode("\n", $results['nodes failed']),
-                ]
-            )
-        );
+        t(
+          'The following nodes produced errors: \n @nodes', [
+            '@nodes' => implode("\n", $results['nodes failed']),
+          ]
+        )
+      );
     }
     else {
       \Drupal::messenger()->addMessage(
-            t(
-                '@count results processed.', [
-                  '@count' => $results['count'],
-                ]
-            )
-        );
+        t(
+          '@count results processed.', [
+            '@count' => $results['count'],
+          ]
+        )
+      );
     }
   }
 

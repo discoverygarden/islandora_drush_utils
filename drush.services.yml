@@ -60,3 +60,9 @@ services:
       - '@dgi_standard_derivative_examiner.examiner'
     tags:
       - name: drush.command
+  islandora_drush_utils.derivatives_generator:
+    class: \Drupal\islandora_drush_utils\Commands\DerivativesGenerator
+    arguments:
+      - '@entity_type.manager'
+    tags:
+      - name: drush.command
