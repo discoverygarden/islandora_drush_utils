@@ -85,6 +85,7 @@ class DerivativesGenerator extends DrushCommands {
           ->getQuery()
           ->condition('name', $options['model_name'])
           ->condition('vid', 'islandora_models')
+          ->accessCheck()
           ->execute();
 
         $term_id = reset($terms);

@@ -105,7 +105,8 @@ class MissingDerivatives extends DrushCommands {
     // Get all nodes relevant.
     return $this->entityTypeManager->getStorage('node')
       ->getQuery()
-      ->condition('type', 'islandora_object');
+      ->condition('type', 'islandora_object')
+      ->accessCheck();
   }
 
   /**

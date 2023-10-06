@@ -344,7 +344,8 @@ class Deleter extends DrushCommands {
   protected function doTraverse(array $item, &$context) {
     $this->log('Traversing {id}.', ['id' => $item['id']]);
     $child_query = $this->nodeStorage->getQuery()
-      ->condition('field_member_of', $item['id']);
+      ->condition('field_member_of', $item['id'])
+      ->accessCheck();
 
     array_map([$this, 'enqueueTraversal'], $child_query->execute());
 
@@ -467,6 +468,7 @@ class Deleter extends DrushCommands {
   protected function findRelatedMedia(NodeInterface $node): \Traversable {
     $results = $this->mediaStorage->getQuery()
       ->condition('field_media_of', $node->id())
+      ->accessCheck()
       ->execute();
     foreach ($results as $mid) {
       yield $mid => $this->mediaStorage->load($mid);
