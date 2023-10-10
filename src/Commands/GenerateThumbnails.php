@@ -24,13 +24,6 @@ class GenerateThumbnails extends DrushCommands {
   protected $storage;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Database connection.
    *
    * @var \Drupal\Core\Database\Connection

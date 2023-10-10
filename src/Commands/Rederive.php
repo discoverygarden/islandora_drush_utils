@@ -33,13 +33,6 @@ class Rederive extends DrushCommands {
   protected $entityTypeManager;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Constructor.
    *
    * @param \Drupal\islandora\IslandoraUtils $utils

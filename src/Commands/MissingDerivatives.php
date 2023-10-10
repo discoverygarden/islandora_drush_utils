@@ -26,13 +26,6 @@ class MissingDerivatives extends DrushCommands {
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Examiner utility.
    *
    * @var \Drupal\dgi_standard_derivative_examiner\Utility\Examiner
