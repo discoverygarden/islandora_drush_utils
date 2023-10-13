@@ -33,13 +33,6 @@ class Rederive extends DrushCommands {
   protected $entityTypeManager;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Constructor.
    *
    * @param \Drupal\islandora\IslandoraUtils $utils
@@ -71,6 +64,7 @@ class Rederive extends DrushCommands {
     $original_file_taxonomy_ids = $this->entityTypeManager->getStorage('taxonomy_term')
       ->getQuery()
       ->condition('field_external_uri', $options['source_uri'])
+      ->accessCheck()
       ->execute();
     if (empty($original_file_taxonomy_ids)) {
       throw new \Exception("The provided 'source_uri' ({$options['source_uri']}) did not match any taxonomy terms 'field_external_uri' field.");
@@ -98,7 +92,8 @@ class Rederive extends DrushCommands {
     $media_storage = $this->entityTypeManager->getStorage('media');
     $base_query = $media_storage->getQuery()
       ->exists('field_media_of')
-      ->condition('field_media_use', $original_file_taxonomy_ids, 'IN');
+      ->condition('field_media_use', $original_file_taxonomy_ids, 'IN')
+      ->accessCheck();
     if (!isset($sandbox['total'])) {
       $count_query = clone $base_query;
       $sandbox['total'] = $count_query->count()->execute();

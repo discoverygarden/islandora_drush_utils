@@ -24,13 +24,6 @@ class GenerateThumbnails extends DrushCommands {
   protected $storage;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Database connection.
    *
    * @var \Drupal\Core\Database\Connection
@@ -84,6 +77,7 @@ class GenerateThumbnails extends DrushCommands {
         ->getQuery()
         ->condition('name', $options['model'])
         ->condition('vid', 'islandora_models')
+        ->accessCheck()
         ->execute();
       $uri_id = reset($uri_id);
       $uri = $this->storage->getStorage('taxonomy_term')->load($uri_id);
@@ -95,6 +89,7 @@ class GenerateThumbnails extends DrushCommands {
         ->condition('type', $options['bundle'])
         ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri['uri'])
         ->sort('nid', 'ASC')
+        ->accessCheck()
         ->execute();
     }
     else {

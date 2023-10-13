@@ -182,7 +182,8 @@ class NullChildWeight extends DrushCommands {
     $node_storage = $this->entityTypeManager->getStorage('node');
     $base_query = $node_storage->getQuery()
       ->condition('field_member_of', $parent_nid)
-      ->notExists('field_weight');
+      ->notExists('field_weight')
+      ->accessCheck();
     return $base_query;
   }
 

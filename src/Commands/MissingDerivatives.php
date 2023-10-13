@@ -26,13 +26,6 @@ class MissingDerivatives extends DrushCommands {
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Examiner utility.
    *
    * @var \Drupal\dgi_standard_derivative_examiner\Utility\Examiner
@@ -105,7 +98,8 @@ class MissingDerivatives extends DrushCommands {
     // Get all nodes relevant.
     return $this->entityTypeManager->getStorage('node')
       ->getQuery()
-      ->condition('type', 'islandora_object');
+      ->condition('type', 'islandora_object')
+      ->accessCheck();
   }
 
   /**
