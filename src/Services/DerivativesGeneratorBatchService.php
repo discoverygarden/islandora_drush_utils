@@ -2,10 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Services;
 
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class DerivativesGeneratorBatchService implores generation of derivatives.
