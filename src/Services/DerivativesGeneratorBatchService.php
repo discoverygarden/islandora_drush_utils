@@ -10,35 +10,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Class DerivativesGeneratorBatchService implores generation of derivatives.
  */
-class DerivativesGeneratorBatchService implements ContainerInjectionInterface {
+class DerivativesGeneratorBatchService {
 
   use StringTranslationTrait;
-
-  /**
-   * Drupal\Core\Messenger\MessengerInterface definition.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  protected static $messenger;
-
-  /**
-   * Class constructor.
-   *
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The core messenger service.
-   */
-  public function __construct(MessengerInterface $messenger) {
-    $this->messenger = $messenger;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-          $container->get('messenger')
-      );
-  }
 
   /**
    * Batch process callback.
