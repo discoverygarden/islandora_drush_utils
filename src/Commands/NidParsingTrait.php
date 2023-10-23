@@ -2,6 +2,9 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+/**
+ * Facilitate parsing structures of node IDs.
+ */
 trait NidParsingTrait {
 
   /**
@@ -33,7 +36,7 @@ trait NidParsingTrait {
         return explode("\n", $entities);
       }
       else {
-        throw new \InvalidArgumentException(strtr("The passed file for '!arg' appears to be a file, but is not readable.",[
+        throw new \InvalidArgumentException(strtr("The passed file for '!arg' appears to be a file, but is not readable.", [
           '!arg' => static::argName(),
         ]));
       }

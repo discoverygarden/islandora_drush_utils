@@ -252,7 +252,6 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
     return $result;
   }
 
-
   /**
    * Batch finished callback.
    */
