@@ -83,11 +83,11 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
    */
   public function userOption(Command $command, AnnotationData $annotationData) {
     $command->addOption(
-          'user',
-          'u',
-          InputOption::VALUE_REQUIRED,
-          'The Drupal user as whom to run the command.'
-      );
+      'user',
+      'u',
+      InputOption::VALUE_REQUIRED,
+      'The Drupal user as whom to run the command.'
+    );
   }
 
   /**
@@ -126,24 +126,18 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
       $candidates = $user_storage->loadByProperties(['name' => $user]);
       if (count($candidates) > 1) {
         return new CommandError(
-              \dt(
-                  'Too many candidates for user name: @spec', [
-                    '@spec' => $user,
-                  ]
-              )
-          );
+          \dt('Too many candidates for user name: @spec', [
+            '@spec' => $user,
+          ])
+        );
       }
       $this->user = reset($candidates);
     }
 
     if (!$this->user) {
-      return new CommandError(
-            \dt(
-                'Failed to load the user: @spec', [
-                  '@spec' => $user,
-                ]
-            )
-        );
+      return new CommandError(\dt('Failed to load the user: @spec', [
+        '@spec' => $user,
+      ]));
     }
   }
 
