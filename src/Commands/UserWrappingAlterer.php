@@ -2,8 +2,8 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
-use Consolidation\AnnotatedCommand\Parser\CommandInfo;
 use Consolidation\AnnotatedCommand\CommandInfoAltererInterface;
+use Consolidation\AnnotatedCommand\Parser\CommandInfo;
 use Psr\Log\LoggerInterface;
 
 /**

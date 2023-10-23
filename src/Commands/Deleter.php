@@ -2,12 +2,9 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
-use Drupal\media\MediaInterface;
-use Drupal\node\NodeInterface;
-
 use Drupal\Component\Utility\Random;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -15,10 +12,9 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\TypedData\TranslatableInterface;
+use Drupal\media\MediaInterface;
+use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
-
-use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
