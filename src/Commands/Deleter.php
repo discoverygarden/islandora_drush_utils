@@ -579,6 +579,4 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
     }
   }
 
-
-
 }
