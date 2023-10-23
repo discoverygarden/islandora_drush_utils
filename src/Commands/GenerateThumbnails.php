@@ -5,8 +5,8 @@ namespace Drupal\islandora_drush_utils\Commands;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
-use Psr\Log\LoggerInterface;
 
 /**
  * Drush command to rederive thumbnails.
@@ -14,7 +14,6 @@ use Psr\Log\LoggerInterface;
 class GenerateThumbnails extends DrushCommands {
 
   use StringTranslationTrait;
-
 
   /**
    * Entity type manager.
@@ -35,14 +34,12 @@ class GenerateThumbnails extends DrushCommands {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger to which to log.
    * @param \Drupal\Core\Database\Connection $database
    *   A Drupal database connection.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, Connection $database) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database) {
+    parent::__construct();
     $this->storage = $entity_type_manager;
-    $this->logger = $logger;
     $this->database = $database;
   }
 
@@ -109,7 +106,10 @@ class GenerateThumbnails extends DrushCommands {
       'title' => $this->t('Regen TNs'),
       'operations' => [
       [
-        '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperation',
+        [
+          DerivativesGeneratorBatchService::class,
+          'generateDerivativesOperation',
+        ],
         [
           $entities,
           'http://pcdm.org/use#ThumbnailImage',
@@ -119,7 +119,10 @@ class GenerateThumbnails extends DrushCommands {
       'init_message' => $this->t('Starting'),
       'progress_message' => $this->t('@range of @total'),
       'error_message' => $this->t('An error occurred'),
-      'finished' => '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperationFinished',
+      'finished' => [
+        DerivativesGeneratorBatchService::class,
+        'generateDerivativesOperationFinished',
+      ],
     ];
     batch_set($batch);
     drush_backend_batch_process();

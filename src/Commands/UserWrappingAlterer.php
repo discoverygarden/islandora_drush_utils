@@ -32,12 +32,12 @@ class UserWrappingAlterer implements CommandInfoAltererInterface {
   /**
    * The logger to use.
    *
-   * @var Psr\Log\LoggerInterface
+   * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
   /**
-   * Whether or not we should emit debug messages.
+   * Whether we should emit debug messages.
    *
    * @var bool
    */

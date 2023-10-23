@@ -29,6 +29,7 @@ class DerivativesGenerator extends DrushCommands {
    *   The entity type manager service.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+    parent::__construct();
     $this->entityTypeManager = $entity_type_manager;
   }
 

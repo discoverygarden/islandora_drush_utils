@@ -1,0 +1,5 @@
+---
+services:
+  logger.islandora_drush_utils:
+    parent: logger.channel_base
+    arguments: [ 'islandora_drush_utils' ]

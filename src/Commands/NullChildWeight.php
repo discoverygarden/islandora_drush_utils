@@ -10,7 +10,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 /**
  * Drush command to identify/update nodes with a mix of values in field_weight.
@@ -19,6 +19,7 @@ class NullChildWeight extends DrushCommands {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
+  use LoggingTrait;
 
   /**
    * Entity type manager.
@@ -42,13 +43,6 @@ class NullChildWeight extends DrushCommands {
   protected IslandoraUtils $utils;
 
   /**
-   * Logger.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected LoggerInterface $ourLogger;
-
-  /**
    * The options for the Drush command.
    *
    * @var array|null
@@ -64,14 +58,12 @@ class NullChildWeight extends DrushCommands {
    *   The Drupal database connection.
    * @param \Drupal\islandora\IslandoraUtils $utils
    *   The Islandora utils service.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger to which to log.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database, IslandoraUtils $utils, LoggerInterface $logger) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database, IslandoraUtils $utils) {
+    parent::__construct();
     $this->entityTypeManager = $entity_type_manager;
     $this->database = $database;
     $this->utils = $utils;
-    $this->ourLogger = $logger;
   }
 
   /**
@@ -121,9 +113,9 @@ class NullChildWeight extends DrushCommands {
     if ($highest_weight) {
       if ($this->options['dry-run']) {
         $null_nids = $this->getBaseQuery($parent_nid)->execute();
-        $this->ourLogger->log('info', $this->t('Would have set weight on nids: @nids', [
+        $this->log($this->t('Would have set weight on nids: @nids', [
           '@nids' => implode(', ', $null_nids),
-        ]));
+        ]), [], LogLevel::INFO);
       }
       else {
         $batch = [
@@ -143,7 +135,7 @@ class NullChildWeight extends DrushCommands {
       }
     }
     else {
-      $this->ourLogger->log('info', $this->t('No applicable children found to be updated.'));
+      $this->log($this->t('No applicable children found to be updated.'), [], LogLevel::INFO);
     }
 
   }
@@ -224,7 +216,7 @@ class NullChildWeight extends DrushCommands {
         $sandbox['last_nid'] = $result;
         $node = $this->entityTypeManager->getStorage('node')->load($result);
         if (!$node) {
-          $this->logger->debug(
+          $this->log(
             'Failed to load node {node}; skipping.', [
               'node' => $result,
             ]
@@ -238,7 +230,7 @@ class NullChildWeight extends DrushCommands {
         );
         $node->set('field_weight', $sandbox['weight']);
         $node->save();
-        $this->logger->info(
+        $this->log(
           'Updated weight for {node}.', [
             'node' => $node->id(),
           ]
@@ -246,10 +238,10 @@ class NullChildWeight extends DrushCommands {
         $sandbox['weight']++;
       }
       catch (\Exception $e) {
-        $this->logger->error(
+        $this->log(
           'Encountered an exception: {exception}', [
             'exception' => $e,
-          ]
+          ], LogLevel::ERROR
         );
       }
       $sandbox['completed']++;

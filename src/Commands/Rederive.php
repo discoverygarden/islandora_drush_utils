@@ -8,7 +8,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
 use Drupal\islandora\Plugin\ContextReaction\DerivativeReaction;
 use Drush\Commands\DrushCommands;
-use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 /**
  * Drush command implementation.
@@ -17,6 +17,7 @@ class Rederive extends DrushCommands {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
+  use LoggingTrait;
 
   /**
    * Instance of "IslandoraUtils" service, for... utility.
@@ -39,13 +40,11 @@ class Rederive extends DrushCommands {
    *   An instance of the "IslandoraUtils" service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger to which to log.
    */
-  public function __construct(IslandoraUtils $utils, EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger) {
+  public function __construct(IslandoraUtils $utils, EntityTypeManagerInterface $entity_type_manager) {
+    parent::__construct();
     $this->utils = $utils;
     $this->entityTypeManager = $entity_type_manager;
-    $this->logger = $logger;
   }
 
   /**
@@ -116,7 +115,7 @@ class Rederive extends DrushCommands {
         $sandbox['last_mid'] = $result;
         $media = $media_storage->load($result);
         if (!$media) {
-          $this->logger->debug(
+          $this->log(
                 'Failed to load media {media}; skipping.', [
                   'media' => $result,
                 ]
@@ -125,7 +124,7 @@ class Rederive extends DrushCommands {
         }
         $node = $this->utils->getParentNode($media);
         if (!$node) {
-          $this->logger->debug(
+          $this->log(
                 'Failed to load identify/load node for media {media}; skipping.', [
                   'media' => $result,
                 ]
@@ -143,7 +142,7 @@ class Rederive extends DrushCommands {
               $node,
               $media
           );
-        $this->logger->debug(
+        $this->log(
               'Derivative reactions executed for {node}/{media}.', [
                 'node' => $node->id(),
                 'media' => $media->id(),
@@ -151,11 +150,13 @@ class Rederive extends DrushCommands {
           );
       }
       catch (\Exception $e) {
-        $this->logger->error(
-              'Encountered an exception: {exception}', [
-                'exception' => $e,
-              ]
-          );
+        $this->log(
+          'Encountered an exception: {exception}',
+          [
+            'exception' => $e,
+          ],
+          LogLevel::ERROR
+        );
       }
       $sandbox['completed']++;
       $context['finished'] = $sandbox['completed'] / $sandbox['total'];

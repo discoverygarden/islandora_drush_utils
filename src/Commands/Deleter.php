@@ -29,6 +29,8 @@ class Deleter extends DrushCommands {
     __wakeup as traitWakeup;
   }
 
+  use LoggingTrait;
+
   /**
    * The database connection service.
    *
@@ -86,13 +88,6 @@ class Deleter extends DrushCommands {
   protected QueueInterface $deletionQueue;
 
   /**
-   * Logging service.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected LoggerInterface $ourLogger;
-
-  /**
    * Prefix for our queue to use.
    *
    * @var string
@@ -110,13 +105,12 @@ class Deleter extends DrushCommands {
    * Constructor.
    */
   public function __construct(
-        LoggerInterface $logger,
         EntityTypeManagerInterface $entity_type_manager,
         QueueFactory $queue_factory,
         Connection $database,
         EntityFieldManagerInterface $entity_field_manager
     ) {
-    $this->ourLogger = $logger;
+    parent::__construct();
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->queueFactory = $queue_factory;
@@ -248,19 +242,6 @@ class Deleter extends DrushCommands {
     return $result;
   }
 
-  /**
-   * Logging helper.
-   *
-   * @param string $message
-   *   The message to log.
-   * @param array $context
-   *   Replacements/context for the message.
-   * @param mixed $level
-   *   The log level.
-   */
-  protected function log($message, array $context = [], $level = LogLevel::DEBUG): void {
-    $this->ourLogger->log($level, $message, $context);
-  }
 
   /**
    * Batch finished callback.
