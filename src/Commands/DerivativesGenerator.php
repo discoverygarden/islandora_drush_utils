@@ -101,7 +101,7 @@ class DerivativesGenerator extends DrushCommands implements ContainerInjectionIn
       throw new \InvalidArgumentException("One of 'nids', 'model_name' or 'model_uri' must be passed.");
     }
     elseif (count($providers) > 1) {
-      throw new \InvalidArgumentException("Only on of 'nids', 'model_name' and 'model_uri' may be passed.");
+      throw new \InvalidArgumentException("Only one of 'nids', 'model_name' and 'model_uri' may be passed.");
     }
 
     $provider = reset($providers);
