@@ -17,6 +17,7 @@ class DerivativesGenerator extends DrushCommands implements ContainerInjectionIn
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
+  use NidParsingTrait;
 
   /**
    * Entity type manager.
@@ -75,19 +76,7 @@ class DerivativesGenerator extends DrushCommands implements ContainerInjectionIn
       ->accessCheck();
     $entity_info = [
       'nids' => function () use ($options) {
-        // If a file path is provided, parse it.
-        if (is_file($options['nids'])) {
-          if (is_readable($options['nids'])) {
-            $entities = trim(file_get_contents($options['nids']));
-            return explode("\n", $entities);
-          }
-          else {
-            throw new \LogicException("'nids' appears to be a file; however, it is not readable.");
-          }
-        }
-        else {
-          return explode(',', $options['nids']);
-        }
+        return static::parseNids($options['nids']);
       },
       'model_name' => function () use ($options, $entity_query) {
         return $entity_query

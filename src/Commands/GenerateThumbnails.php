@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GenerateThumbnails extends DrushCommands implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
+  use NidParsingTrait;
 
   /**
    * Entity type manager.
@@ -74,7 +75,7 @@ class GenerateThumbnails extends DrushCommands implements ContainerInjectionInte
    * @islandora-drush-utils-user-wrap
    */
   public function rederive(array $options = [
-    'nids' => NULL,
+    'nids' => self::REQ,
     'bundle' => 'islandora_object',
     'model' => self::REQ,
   ]) {
@@ -101,16 +102,7 @@ class GenerateThumbnails extends DrushCommands implements ContainerInjectionInte
         ->execute();
     }
     else {
-      // If a file path is provided, parse it.
-      if (is_file($options['nids'])) {
-        if (is_readable($options['nids'])) {
-          $entities = trim(file_get_contents($options['nids']));
-          $entities = explode("\n", $entities);
-        }
-      }
-      else {
-        $entities = explode(',', $options['nids']);
-      }
+      $entities = static::parseNids($options['nids']);
     }
     // Set up batch.
     $batch = [
