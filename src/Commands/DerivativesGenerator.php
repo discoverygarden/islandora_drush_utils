@@ -17,7 +17,7 @@ class DerivativesGenerator extends DrushCommands implements ContainerInjectionIn
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
-  use NidParsingTrait;
+  use NodeIdParsingTrait;
 
   /**
    * Entity type manager.
@@ -76,7 +76,7 @@ class DerivativesGenerator extends DrushCommands implements ContainerInjectionIn
       ->accessCheck();
     $entity_info = [
       'nids' => function () use ($options) {
-        return static::parseNids($options['nids']);
+        return static::parseNodeIds($options['nids']);
       },
       'model_name' => function () use ($options, $entity_query) {
         return $entity_query

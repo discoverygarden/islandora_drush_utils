@@ -5,7 +5,7 @@ namespace Drupal\islandora_drush_utils\Commands;
 /**
  * Facilitate parsing structures of node IDs.
  */
-trait NidParsingTrait {
+trait NodeIdParsingTrait {
 
   /**
    * Helper; allow the name of the property to be adjusted.
@@ -21,14 +21,14 @@ trait NidParsingTrait {
    * Helper; parse file or inline CSV-like structures.
    *
    * @param string $nids
-   *   Either:
+   *   A string containing either:
    *   - the path to a file of IDs, one per line; or,
-   *   - a string containing the IDs, separated by commas.
+   *   - the IDs proper, separated by commas.
    *
    * @return string[]
-   *   The nids to process.
+   *   The node IDs to process.
    */
-  public static function parseNids(string $nids) : array {
+  public static function parseNodeIds(string $nids) : array {
     // If a file path is provided, parse it.
     if (is_file($nids)) {
       if (is_readable($nids)) {

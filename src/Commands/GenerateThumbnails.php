@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GenerateThumbnails extends DrushCommands implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
-  use NidParsingTrait;
+  use NodeIdParsingTrait;
 
   /**
    * Entity type manager.
@@ -102,7 +102,7 @@ class GenerateThumbnails extends DrushCommands implements ContainerInjectionInte
         ->execute();
     }
     else {
-      $entities = static::parseNids($options['nids']);
+      $entities = static::parseNodeIds($options['nids']);
     }
     // Set up batch.
     $batch = [
