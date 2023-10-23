@@ -4,6 +4,7 @@ namespace Drupal\islandora_drush_utils\Commands;
 
 use Consolidation\AnnotatedCommand\CommandData;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -11,11 +12,12 @@ use Drupal\islandora\IslandoraUtils;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command to identify/update nodes with a mix of values in field_weight.
  */
-class NullChildWeight extends DrushCommands {
+class NullChildWeight extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -64,6 +66,17 @@ class NullChildWeight extends DrushCommands {
     $this->entityTypeManager = $entity_type_manager;
     $this->database = $database;
     $this->utils = $utils;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('database'),
+      $container->get('islandora.utils'),
+    );
   }
 
   /**

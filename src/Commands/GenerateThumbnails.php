@@ -3,15 +3,17 @@
 namespace Drupal\islandora_drush_utils\Commands;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command to rederive thumbnails.
  */
-class GenerateThumbnails extends DrushCommands {
+class GenerateThumbnails extends DrushCommands implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
 
@@ -44,6 +46,16 @@ class GenerateThumbnails extends DrushCommands {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('database'),
+    );
+  }
+
+  /**
    * Rederive thumbnails for nodes.
    *
    * @option nids Comma separated list or path to file containing a
@@ -53,7 +65,7 @@ class GenerateThumbnails extends DrushCommands {
    * @option bundle When the nids option is not provided the bundle will be
    *   used
    *   to filter results.
-   * @option model The name of the model to filter by (Video, Image, Page,
+   * @option model CSV of names of the model to filter by (Video, Image, Page,
    *   etc.).
    *
    * @command islandora_drush_utils:rederive_thumbnails
@@ -64,27 +76,26 @@ class GenerateThumbnails extends DrushCommands {
   public function rederive(array $options = [
     'nids' => NULL,
     'bundle' => 'islandora_object',
-    'model' => 'Video',
+    'model' => self::REQ,
   ]) {
     $entities = [];
 
     if (is_null($options['nids'])) {
       // Load the model external uri.
-      $uri_id = $this->storage->getStorage('taxonomy_term')
+      $term_query = $this->storage->getStorage('taxonomy_term')
         ->getQuery()
-        ->condition('name', $options['model'])
         ->condition('vid', 'islandora_models')
-        ->accessCheck()
-        ->execute();
-      $uri_id = reset($uri_id);
-      $uri = $this->storage->getStorage('taxonomy_term')->load($uri_id);
-      $uri = $uri->get('field_external_uri')->getValue()[0];
+        ->accessCheck();
+
+      if ($options['model'] && ($models = str_getcsv($options['model']))) {
+        $term_query->condition('name', $models, 'IN');
+      }
 
       // Get all nodes relevant.
       $entities = $this->storage->getStorage('node')
         ->getQuery()
         ->condition('type', $options['bundle'])
-        ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri['uri'])
+        ->condition('field_model', $term_query->execute(), 'IN')
         ->sort('nid', 'ASC')
         ->accessCheck()
         ->execute();

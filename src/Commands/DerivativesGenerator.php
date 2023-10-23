@@ -2,15 +2,18 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command implementation.
  */
-class DerivativesGenerator extends DrushCommands {
+class DerivativesGenerator extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -34,32 +37,25 @@ class DerivativesGenerator extends DrushCommands {
   }
 
   /**
-   * Retrieve the base query for a given URI.
-   *
-   * @param string $uri
-   *   The URI to query for.
-   *
-   * @return mixed
-   *   The query object.
+   * {@inheritDoc}
    */
-  private function getBaseQuery(string $uri) {
-    return $this->entityTypeManager->getStorage('node')
-      ->getQuery()
-      ->condition('type', 'islandora_object')
-      ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri)
-      ->sort('nid', 'ASC');
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+    );
   }
 
   /**
-   * Generate derivatives based on source_uri, nids,or model_name.
+   * Generate derivatives based on source_uri, nids, model_uri, or model_name.
    *
    * @option media_use_uri Required, the "media use" term for which to re-derive
    *   derivatives, based on actions configured around this URI. Defaults to
    *   'http://pcdm.org/use#ThumbnailImage'.
-   * @option nids A comma seperated list of node IDs for which to re-derive
+   * @option nids A comma separated list of node IDs for which to re-derive
    *   derivatives, or a file path to a file containing a list of node IDs.
    * @option model_uri An Islandora Models taxonomy term URI.
    *   (IE: "http://purl.org/coar/resource_type/c_c513" for 'Image').
+   * @option model_name CSV of model names, as alternative to a model_uri.
    *
    * @command islandora_drush_utils:derivativesgenerator
    * @aliases islandora_drush_utils:dg,idu:dg
@@ -68,55 +64,69 @@ class DerivativesGenerator extends DrushCommands {
    */
   public function derivativesGenerator(array $options = [
     'media_use_uri' => 'http://pcdm.org/use#ThumbnailImage',
-    'nids' => '',
-    'model_uri' => '',
-    'model_name' => '',
+    'nids' => self::REQ,
+    'model_uri' => self::REQ,
+    'model_name' => self::REQ,
   ]) {
-    // Populate a list of entities to re-derive using the model_name or nids.
-    $entities = [];
-
-    if (empty($options['nids'])) {
-      if (!empty($options['model_uri'])) {
-        // Get all nodes relevant.
-        $entities = $this->getBaseQuery($options['model_uri'])->execute();
-      }
-
-      if (!empty($options['model_name'])) {
-        $terms = $this->entityTypeManager->getStorage('taxonomy_term')
-          ->getQuery()
-          ->condition('name', $options['model_name'])
-          ->condition('vid', 'islandora_models')
-          ->accessCheck()
+    $entity_query = $this->entityTypeManager->getStorage('node')
+      ->getQuery()
+      ->condition('type', 'islandora_object')
+      ->sort('nid', 'ASC')
+      ->accessCheck();
+    $entity_info = [
+      'nids' => function () use ($options) {
+        // If a file path is provided, parse it.
+        if (is_file($options['nids'])) {
+          if (is_readable($options['nids'])) {
+            $entities = trim(file_get_contents($options['nids']));
+            return explode("\n", $entities);
+          }
+          else {
+            throw new \LogicException("'nids' appears to be a file; however, it is not readable.");
+          }
+        }
+        else {
+          return explode(',', $options['nids']);
+        }
+      },
+      'model_name' => function () use ($options, $entity_query) {
+        return $entity_query
+          ->condition('field_model.entity:taxonomy_term.name', str_getcsv($options['model_name']), 'IN')
           ->execute();
+      },
+      'model_uri' => function () use ($options, $entity_query) {
+        return $entity_query
+          ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', str_getcsv($options['model_uri']), 'IN')
+          ->execute();
+      },
+    ];
+    $entity_providers_info = [
+      'nids' => $options['nids'],
+      'model_name' => $options['model_name'],
+      'model_uri' => $options['model_uri'],
+    ];
 
-        $term_id = reset($terms);
-        $term = $this->entityTypeManager->getStorage('taxonomy_term')->load($term_id);
-        $term_data = $term->get('field_external_uri')->getValue()[0];
+    $providers = array_intersect_key($entity_info, array_filter($entity_providers_info));
 
-        if (!empty($term_data['uri'])) {
-          $entities = $this->getBaseQuery($term_data['uri'])->execute();
-        }
-      }
+    if (count($providers) === 0) {
+      throw new \InvalidArgumentException("One of 'nids', 'model_name' or 'model_uri' must be passed.");
     }
-    else {
-      // If a file path is provided, parse it.
-      if (is_file($options['nids'])) {
-        if (is_readable($options['nids'])) {
-          $entities = trim(file_get_contents($options['nids']));
-          $entities = explode("\n", $entities);
-        }
-      }
-      else {
-        $entities = explode(',', $options['nids']);
-      }
+    elseif (count($providers) > 1) {
+      throw new \InvalidArgumentException("Only on of 'nids', 'model_name' and 'model_uri' may be passed.");
     }
+
+    $provider = reset($providers);
+    $entities = $provider();
 
     // Set up batch.
     $batch = [
       'title' => $this->t('Regenerate derivatives'),
       'operations' => [
         [
-          '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperation',
+          [
+            DerivativesGeneratorBatchService::class,
+            'generateDerivativesOperation',
+          ],
           [
             $entities,
             $options['media_use_uri'],
@@ -126,7 +136,10 @@ class DerivativesGenerator extends DrushCommands {
       'init_message' => $this->t('Starting'),
       'progress_message' => $this->t('@range of @total'),
       'error_message' => $this->t('An error occurred'),
-      'finished' => '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperationFinished',
+      'finished' => [
+        DerivativesGeneratorBatchService::class,
+        'generateDerivativesOperationFinished',
+      ],
     ];
 
     drush_op('batch_set', $batch);

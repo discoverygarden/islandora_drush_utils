@@ -2,6 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\media\MediaInterface;
 use Drupal\node\NodeInterface;
 
@@ -18,11 +19,12 @@ use Drush\Commands\DrushCommands;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Deleter service, to recursively delete.
  */
-class Deleter extends DrushCommands {
+class Deleter extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait {
     __sleep as traitSleep;
@@ -124,6 +126,18 @@ class Deleter extends DrushCommands {
       );
 
     $this->init();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('queue'),
+      $container->get('database'),
+      $container->get('entity_field.manager'),
+    );
   }
 
   /**
@@ -568,5 +582,7 @@ class Deleter extends DrushCommands {
       $this->op([$entity, 'removeTranslation'], [$langcode]);
     }
   }
+
+
 
 }

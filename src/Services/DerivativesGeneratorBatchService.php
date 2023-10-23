@@ -28,8 +28,10 @@ class DerivativesGeneratorBatchService {
     if (!isset($sandbox['total'])) {
       if (empty($nodes)) {
         $context['message'] = t('Found no nodes to process');
-        $context['results']['error'] = TRUE;
+        $context['results']['count'] = 0;
+        $context['results']['error'] = FALSE;
         $context['finished'] = 1;
+        return;
       }
       $sandbox['offset'] = 0;
       $sandbox['total'] = count($nodes);

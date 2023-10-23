@@ -2,6 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Consolidation\AnnotatedCommand\CommandData;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Command wrapper to perform user switching.
@@ -20,7 +22,7 @@ use Psr\Log\LoggerAwareTrait;
  * "@islandora_drush_utils-user-wrap" annotation to use it where we want
  * to.
  */
-class UserWrapperCommands implements LoggerAwareInterface {
+class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInterface {
 
   use LoggerAwareTrait;
 
@@ -61,6 +63,17 @@ class UserWrapperCommands implements LoggerAwareInterface {
     $this->switcher = $account_switcher;
     $this->entityTypeManager = $entity_type_manager;
     $this->debug = $debug;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('account_switcher'),
+      $container->get('entity_type.manager'),
+      FALSE,
+    );
   }
 
   /**

@@ -1,33 +1,27 @@
+---
 services:
   islandora_drush_utils.deleter:
     class: \Drupal\islandora_drush_utils\Commands\Deleter
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command
-    arguments:
-      - '@entity_type.manager'
-      - '@queue'
-      - '@database'
-      - '@entity_field.manager'
   islandora_drush_utils.rederiver:
     class: \Drupal\islandora_drush_utils\Commands\Rederive
-    arguments:
-      - '@islandora.utils'
-      - '@entity_type.manager'
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command
   islandora_drush_utils.rederive_thumbnails:
     class: \Drupal\islandora_drush_utils\Commands\GenerateThumbnails
-    arguments:
-      - '@entity_type.manager'
-      - '@database'
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command
   islandora_drush_utils.command.user_wrapper:
     class: \Drupal\islandora_drush_utils\Commands\UserWrapperCommands
-    arguments:
-      - '@account_switcher'
-      - '@entity_type.manager'
-      - false
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command
   islandora_drush_utils.command.user_wrapping_alterer:
@@ -39,22 +33,19 @@ services:
       - false
   islandora_drush_utils.null_child_weight_updater:
     class: \Drupal\islandora_drush_utils\Commands\NullChildWeight
-    arguments:
-      - '@entity_type.manager'
-      - '@database'
-      - '@islandora.utils'
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command
   islandora_drush_utils.missing_derivatives:
     class: \Drupal\islandora_drush_utils\Commands\MissingDerivatives
-    arguments:
-      - '@entity_type.manager'
-      - '@dgi_standard_derivative_examiner.examiner'
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command
   islandora_drush_utils.derivatives_generator:
     class: \Drupal\islandora_drush_utils\Commands\DerivativesGenerator
-    arguments:
-      - '@entity_type.manager'
+    factory: [null, create]
+    arguments: ['@service_container']
     tags:
       - name: drush.command

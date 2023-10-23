@@ -2,6 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -9,11 +10,12 @@ use Drupal\islandora\IslandoraUtils;
 use Drupal\islandora\Plugin\ContextReaction\DerivativeReaction;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command implementation.
  */
-class Rederive extends DrushCommands {
+class Rederive extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -45,6 +47,16 @@ class Rederive extends DrushCommands {
     parent::__construct();
     $this->utils = $utils;
     $this->entityTypeManager = $entity_type_manager;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('islandora.utils'),
+      $container->get('entity_type.manager'),
+    );
   }
 
   /**

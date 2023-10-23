@@ -2,6 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
@@ -9,11 +10,12 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command to identify missing derivatives.
  */
-class MissingDerivatives extends DrushCommands {
+class MissingDerivatives extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -45,6 +47,16 @@ class MissingDerivatives extends DrushCommands {
     parent::__construct();
     $this->entityTypeManager = $entity_type_manager;
     $this->examiner = $examiner;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('dgi_standard_derivative_examiner.examiner'),
+    );
   }
 
   /**
