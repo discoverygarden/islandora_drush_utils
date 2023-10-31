@@ -2,6 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Consolidation\AnnotatedCommand\CommandData;
@@ -11,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Command wrapper to perform user switching.
@@ -20,21 +22,21 @@ use Psr\Log\LoggerAwareTrait;
  * "@islandora_drush_utils-user-wrap" annotation to use it where we want
  * to.
  */
-class UserWrapperCommands implements LoggerAwareInterface {
+class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInterface {
 
   use LoggerAwareTrait;
 
   /**
    * Need access to entities to test users.
    *
-   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
    * Account switcher to do the switching.
    *
-   * @var Drupal\Core\Session\AccountSwitcherInterface
+   * @var \Drupal\Core\Session\AccountSwitcherInterface
    */
   protected $switcher;
 
@@ -43,7 +45,7 @@ class UserWrapperCommands implements LoggerAwareInterface {
    *
    * Either some form of account object, or boolean FALSE.
    *
-   * @var Drupal\Core\Session\AccountInterface|bool
+   * @var \Drupal\Core\Session\AccountInterface|false
    */
   protected $user = FALSE;
 
@@ -64,17 +66,28 @@ class UserWrapperCommands implements LoggerAwareInterface {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('account_switcher'),
+      $container->get('entity_type.manager'),
+      FALSE,
+    );
+  }
+
+  /**
    * Add the option to the command.
    *
    * @hook option @islandora-drush-utils-user-wrap
    */
   public function userOption(Command $command, AnnotationData $annotationData) {
     $command->addOption(
-          'user',
-          'u',
-          InputOption::VALUE_REQUIRED,
-          'The Drupal user as whom to run the command.'
-      );
+      'user',
+      'u',
+      InputOption::VALUE_REQUIRED,
+      'The Drupal user as whom to run the command.'
+    );
   }
 
   /**
@@ -100,7 +113,7 @@ class UserWrapperCommands implements LoggerAwareInterface {
 
     if (!isset($user)) {
       $this->logDebug('"user" option does not appear to be set');
-      return;
+      return NULL;
     }
 
     $user_storage = $this->entityTypeManager->getStorage('user');
@@ -113,24 +126,18 @@ class UserWrapperCommands implements LoggerAwareInterface {
       $candidates = $user_storage->loadByProperties(['name' => $user]);
       if (count($candidates) > 1) {
         return new CommandError(
-              \dt(
-                  'Too many candidates for user name: @spec', [
-                    '@spec' => $user,
-                  ]
-              )
-          );
+          \dt('Too many candidates for user name: @spec', [
+            '@spec' => $user,
+          ])
+        );
       }
       $this->user = reset($candidates);
     }
 
     if (!$this->user) {
-      return new CommandError(
-            \dt(
-                'Failed to load the user: @spec', [
-                  '@spec' => $user,
-                ]
-            )
-        );
+      return new CommandError(\dt('Failed to load the user: @spec', [
+        '@spec' => $user,
+      ]));
     }
   }
 

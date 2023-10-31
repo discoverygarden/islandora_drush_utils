@@ -2,8 +2,8 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
-use Consolidation\AnnotatedCommand\Parser\CommandInfo;
 use Consolidation\AnnotatedCommand\CommandInfoAltererInterface;
+use Consolidation\AnnotatedCommand\Parser\CommandInfo;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -32,12 +32,12 @@ class UserWrappingAlterer implements CommandInfoAltererInterface {
   /**
    * The logger to use.
    *
-   * @var Psr\Log\LoggerInterface
+   * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
   /**
-   * Whether or not we should emit debug messages.
+   * Whether we should emit debug messages.
    *
    * @var bool
    */

@@ -2,43 +2,14 @@
 
 namespace Drupal\islandora_drush_utils\Services;
 
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class DerivativesGeneratorBatchService implores generation of derivatives.
  */
-class DerivativesGeneratorBatchService implements ContainerInjectionInterface {
+class DerivativesGeneratorBatchService {
 
   use StringTranslationTrait;
-
-  /**
-   * Drupal\Core\Messenger\MessengerInterface definition.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  protected static $messenger;
-
-  /**
-   * Class constructor.
-   *
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   The core messenger service.
-   */
-  public function __construct(MessengerInterface $messenger) {
-    $this->messenger = $messenger;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-          $container->get('messenger')
-      );
-  }
 
   /**
    * Batch process callback.
@@ -57,8 +28,10 @@ class DerivativesGeneratorBatchService implements ContainerInjectionInterface {
     if (!isset($sandbox['total'])) {
       if (empty($nodes)) {
         $context['message'] = t('Found no nodes to process');
-        $context['results']['error'] = TRUE;
+        $context['results']['count'] = 0;
+        $context['results']['error'] = FALSE;
         $context['finished'] = 1;
+        return;
       }
       $sandbox['offset'] = 0;
       $sandbox['total'] = count($nodes);

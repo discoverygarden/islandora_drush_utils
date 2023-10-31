@@ -25,7 +25,9 @@ function islandora_drush_utils_batch_alter(&$batch) {
         $operator = $operation;
       }
       // @XXX: this is the most identifying part of this batch.
-      if ($operator instanceof Exporter) {
+      // XXX: Spell out the classname to avoid creating a strong dependency on
+      // "content_sync_helper".
+      if (is_a($operator, "\Drupal\content_sync_helper\Utility\Exporter")) {
         $set['title'] = t('Updating the repository');
       }
     }

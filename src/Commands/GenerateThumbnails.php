@@ -3,18 +3,20 @@
 namespace Drupal\islandora_drush_utils\Commands;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
-use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command to rederive thumbnails.
  */
-class GenerateThumbnails extends DrushCommands {
+class GenerateThumbnails extends DrushCommands implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
-
+  use NodeIdParsingTrait;
 
   /**
    * Entity type manager.
@@ -35,15 +37,23 @@ class GenerateThumbnails extends DrushCommands {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger to which to log.
    * @param \Drupal\Core\Database\Connection $database
    *   A Drupal database connection.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, Connection $database) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database) {
+    parent::__construct();
     $this->storage = $entity_type_manager;
-    $this->logger = $logger;
     $this->database = $database;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('database'),
+    );
   }
 
   /**
@@ -56,7 +66,7 @@ class GenerateThumbnails extends DrushCommands {
    * @option bundle When the nids option is not provided the bundle will be
    *   used
    *   to filter results.
-   * @option model The name of the model to filter by (Video, Image, Page,
+   * @option model CSV of names of the model to filter by (Video, Image, Page,
    *   etc.).
    *
    * @command islandora_drush_utils:rederive_thumbnails
@@ -65,51 +75,44 @@ class GenerateThumbnails extends DrushCommands {
    * @islandora-drush-utils-user-wrap
    */
   public function rederive(array $options = [
-    'nids' => NULL,
+    'nids' => self::REQ,
     'bundle' => 'islandora_object',
-    'model' => 'Video',
+    'model' => self::REQ,
   ]) {
     $entities = [];
 
     if (is_null($options['nids'])) {
       // Load the model external uri.
-      $uri_id = $this->storage->getStorage('taxonomy_term')
+      $term_query = $this->storage->getStorage('taxonomy_term')
         ->getQuery()
-        ->condition('name', $options['model'])
         ->condition('vid', 'islandora_models')
-        ->accessCheck()
-        ->execute();
-      $uri_id = reset($uri_id);
-      $uri = $this->storage->getStorage('taxonomy_term')->load($uri_id);
-      $uri = $uri->get('field_external_uri')->getValue()[0];
+        ->accessCheck();
+
+      if ($options['model'] && ($models = str_getcsv($options['model']))) {
+        $term_query->condition('name', $models, 'IN');
+      }
 
       // Get all nodes relevant.
       $entities = $this->storage->getStorage('node')
         ->getQuery()
         ->condition('type', $options['bundle'])
-        ->condition('field_model.entity:taxonomy_term.field_external_uri.uri', $uri['uri'])
+        ->condition('field_model', $term_query->execute(), 'IN')
         ->sort('nid', 'ASC')
         ->accessCheck()
         ->execute();
     }
     else {
-      // If a file path is provided, parse it.
-      if (is_file($options['nids'])) {
-        if (is_readable($options['nids'])) {
-          $entities = trim(file_get_contents($options['nids']));
-          $entities = explode("\n", $entities);
-        }
-      }
-      else {
-        $entities = explode(',', $options['nids']);
-      }
+      $entities = static::parseNodeIds($options['nids']);
     }
     // Set up batch.
     $batch = [
       'title' => $this->t('Regen TNs'),
       'operations' => [
       [
-        '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperation',
+        [
+          DerivativesGeneratorBatchService::class,
+          'generateDerivativesOperation',
+        ],
         [
           $entities,
           'http://pcdm.org/use#ThumbnailImage',
@@ -119,7 +122,10 @@ class GenerateThumbnails extends DrushCommands {
       'init_message' => $this->t('Starting'),
       'progress_message' => $this->t('@range of @total'),
       'error_message' => $this->t('An error occurred'),
-      'finished' => '\Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService::generateDerivativesOperationFinished',
+      'finished' => [
+        DerivativesGeneratorBatchService::class,
+        'generateDerivativesOperationFinished',
+      ],
     ];
     batch_set($batch);
     drush_backend_batch_process();

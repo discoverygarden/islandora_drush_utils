@@ -2,21 +2,24 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drush\Commands\DrushCommands;
-use Psr\Log\LoggerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
+use Drush\Commands\DrushCommands;
+use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drush command to identify missing derivatives.
  */
-class MissingDerivatives extends DrushCommands {
+class MissingDerivatives extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
+  use LoggingTrait;
 
   /**
    * Entity type manager.
@@ -37,15 +40,23 @@ class MissingDerivatives extends DrushCommands {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger to which to log.
    * @param \Drupal\dgi_standard_derivative_examiner\Utility\Examiner $examiner
    *   Service to examine islandora based nodes.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerInterface $logger, Examiner $examiner) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, Examiner $examiner) {
+    parent::__construct();
     $this->entityTypeManager = $entity_type_manager;
-    $this->logger = $logger;
     $this->examiner = $examiner;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('dgi_standard_derivative_examiner.examiner'),
+    );
   }
 
   /**
@@ -78,11 +89,12 @@ class MissingDerivatives extends DrushCommands {
       drush_op('drush_backend_batch_process');
     }
     else {
-      $this->logger->log(
-        'info',
+      $this->log(
         $this->t(
           'No nodes of type islandora_object found. Exiting without further processing.'
-        )
+        ),
+        [],
+        LogLevel::INFO
       );
     }
 
@@ -136,7 +148,7 @@ class MissingDerivatives extends DrushCommands {
         $sandbox['last_nid'] = $result;
         $node = $this->entityTypeManager->getStorage('node')->load($result);
         if (!$node) {
-          $this->logger->debug(
+          $this->log(
             "Failed to load node {node}; skipping.\n", [
               'node' => $result,
             ]
@@ -161,7 +173,7 @@ class MissingDerivatives extends DrushCommands {
             );
           }
         }
-        $this->logger->debug(
+        $this->log(
           "Examination complete for node id: @node.\n", [
             '@node' => $node->id(),
           ]
@@ -169,10 +181,10 @@ class MissingDerivatives extends DrushCommands {
 
       }
       catch (\Exception $e) {
-        $this->logger->error(
+        $this->log(
           'Encountered an exception: {exception}', [
             'exception' => $e,
-          ]
+          ], LogLevel::ERROR
         );
       }
       $sandbox['completed']++;

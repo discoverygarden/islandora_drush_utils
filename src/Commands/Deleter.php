@@ -2,11 +2,9 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
-use Drupal\media\MediaInterface;
-use Drupal\node\NodeInterface;
-
 use Drupal\Component\Utility\Random;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -14,20 +12,22 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\TypedData\TranslatableInterface;
+use Drupal\media\MediaInterface;
+use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
-
-use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Deleter service, to recursively delete.
  */
-class Deleter extends DrushCommands {
+class Deleter extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait {
     __sleep as traitSleep;
     __wakeup as traitWakeup;
   }
+
+  use LoggingTrait;
 
   /**
    * The database connection service.
@@ -86,13 +86,6 @@ class Deleter extends DrushCommands {
   protected QueueInterface $deletionQueue;
 
   /**
-   * Logging service.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected LoggerInterface $ourLogger;
-
-  /**
    * Prefix for our queue to use.
    *
    * @var string
@@ -110,13 +103,12 @@ class Deleter extends DrushCommands {
    * Constructor.
    */
   public function __construct(
-        LoggerInterface $logger,
         EntityTypeManagerInterface $entity_type_manager,
         QueueFactory $queue_factory,
         Connection $database,
         EntityFieldManagerInterface $entity_field_manager
     ) {
-    $this->ourLogger = $logger;
+    parent::__construct();
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->queueFactory = $queue_factory;
@@ -130,6 +122,18 @@ class Deleter extends DrushCommands {
       );
 
     $this->init();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('queue'),
+      $container->get('database'),
+      $container->get('entity_field.manager'),
+    );
   }
 
   /**
@@ -246,20 +250,6 @@ class Deleter extends DrushCommands {
           ]
       );
     return $result;
-  }
-
-  /**
-   * Logging helper.
-   *
-   * @param string $message
-   *   The message to log.
-   * @param array $context
-   *   Replacements/context for the message.
-   * @param mixed $level
-   *   The log level.
-   */
-  protected function log($message, array $context = [], $level = LogLevel::DEBUG): void {
-    $this->ourLogger->log($level, $message, $context);
   }
 
   /**
