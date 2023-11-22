@@ -3,3 +3,11 @@ services:
   logger.islandora_drush_utils:
     parent: logger.channel_base
     arguments: [ 'islandora_drush_utils' ]
+  islandora_drush_utils.bulk_publish_unpublish:
+    class: \Drupal\islandora_drush_utils\Commands\PublishUnpublishCollections
+    arguments:
+      - '@entity_type.manager'
+      - '@islandora.utils'
+      - '@logger.islandora_drush_utils'
+    tags:
+      - { name: drush.command }
