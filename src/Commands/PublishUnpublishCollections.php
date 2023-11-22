@@ -36,13 +36,6 @@ class PublishUnpublishCollections extends DrushCommands {
   protected $utils;
 
   /**
-   * Logging service.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
    * Constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
