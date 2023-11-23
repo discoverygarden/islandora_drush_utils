@@ -58,6 +58,7 @@ class DerivativesGeneratorBatchService {
         ->getStorage('action')
         ->getQuery()
         ->condition('configuration.derivative_term_uri', $media_use_uri)
+        ->accessCheck(TRUE)
         ->execute();
 
       $actions = \Drupal::service('entity_type.manager')
