@@ -7,7 +7,8 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\dgi_standard_derivative_examiner\Utility\Examiner;
+use Drupal\dgi_standard_derivative_examiner\Utility\ExaminerInterface;
+use Drupal\node\NodeStorageInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -22,31 +23,21 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
   use LoggingTrait;
 
   /**
-   * Entity type manager.
+   * The node storage service.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\node\NodeStorageInterface
    */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * Examiner utility.
-   *
-   * @var \Drupal\dgi_standard_derivative_examiner\Utility\Examiner
-   */
-  protected Examiner $examiner;
+  protected NodeStorageInterface $nodeStorage;
 
   /**
    * Constructor.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager service.
-   * @param \Drupal\dgi_standard_derivative_examiner\Utility\Examiner $examiner
-   *   Service to examine islandora based nodes.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, Examiner $examiner) {
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected ExaminerInterface $examiner,
+  ) {
     parent::__construct();
-    $this->entityTypeManager = $entity_type_manager;
-    $this->examiner = $examiner;
+    $this->nodeStorage = $this->entityTypeManager->getStorage('node');
   }
 
   /**
@@ -65,10 +56,13 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
    * @command islandora_drush_utils:missing-derivatives
    * @aliases islandora_drush_utils:md,idu:md
    * @usage drush islandora_drush_utils:missing-derivatives --verbose
+   * @option iteration_size The number of nodes to process per iteration, for tuning.
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function update(): void {
+  public function update(array $options = [
+    'iteration_size' => 10,
+  ]): void {
     $node_count = $this->getBaseQuery()->count()->execute();
 
     if ($node_count) {
@@ -81,7 +75,9 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
         'operations' => [
           [
             [$this, 'missingDerivatives'],
-            [],
+            [
+              $options['iteration_size'],
+            ],
           ],
         ],
       ];
@@ -108,7 +104,7 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
    */
   protected function getBaseQuery(): QueryInterface {
     // Get all nodes relevant.
-    return $this->entityTypeManager->getStorage('node')
+    return $this->nodeStorage
       ->getQuery()
       ->condition('type', 'islandora_object')
       ->accessCheck();
@@ -117,10 +113,12 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
   /**
    * Batch for examining nodes for missing derivatives.
    *
-   * @param array|\DrushBatchContext $context
+   * @param int $iteration_size
+   *   The number of nodes to process per batch iteration.
+   * @param \DrushBatchContext|array $context
    *   Batch context.
    */
-  public function missingDerivatives(&$context): void {
+  public function missingDerivatives(int $iteration_size, \DrushBatchContext|array &$context): void {
     $sandbox =& $context['sandbox'];
     $base_query = $this->getBaseQuery();
 
@@ -141,16 +139,17 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
     }
 
     $base_query->sort('nid');
-    $base_query->range(0, 10);
+    $base_query->range(0, $iteration_size);
 
-    foreach ($base_query->execute() as $result) {
+    $node_ids = $base_query->execute();
+    $nodes = $this->nodeStorage->loadMultiple($node_ids) + array_fill_keys($node_ids, FALSE);
+    foreach ($nodes as $nid => $node) {
       try {
-        $sandbox['last_nid'] = $result;
-        $node = $this->entityTypeManager->getStorage('node')->load($result);
+        $sandbox['last_nid'] = $nid;
         if (!$node) {
           $this->log(
             "Failed to load node {node}; skipping.\n", [
-              'node' => $result,
+              'node' => $nid,
             ]
           );
           continue;
@@ -160,18 +159,16 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
             '@node' => $node->id(),
           ]
         );
-        $derivative_review = $this->examiner->examine($node);
-        if ($derivative_review) {
-          foreach ($derivative_review as $derivative_message) {
-            $context['message'] = dt(
-              "Missing derivatives detected. \n nid: {node}, bundle: {bundle}, uri: {use_uri}. \n Message: {message}\n", [
-                'node' => $node->id(),
-                'bundle' => $derivative_message['bundle'],
-                'use_uri' => $derivative_message['use_uri'],
-                'message' => $derivative_message['message'],
-              ]
-            );
-          }
+
+        foreach ($this->examiner->examine($node) as $derivative_message) {
+          $context['message'] = dt(
+            "Missing derivatives detected. \n nid: {node}, bundle: {bundle}, uri: {use_uri}. \n Message: {message}\n", [
+              'node' => $node->id(),
+              'bundle' => $derivative_message['bundle'],
+              'use_uri' => $derivative_message['use_uri'],
+              'message' => $derivative_message['message'],
+            ]
+          );
         }
         $this->log(
           "Examination complete for node id: @node.\n", [
