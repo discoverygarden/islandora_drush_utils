@@ -18,7 +18,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class MissingDerivatives extends DrushCommands implements ContainerInjectionInterface {
 
-  use DependencySerializationTrait;
+  use DependencySerializationTrait {
+    __sleep as depSerSleep;
+    __wakeup as depSerWake;
+  }
   use StringTranslationTrait;
   use LoggingTrait;
 
@@ -28,6 +31,41 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
    * @var \Drupal\node\NodeStorageInterface
    */
   protected NodeStorageInterface $nodeStorage;
+
+  /**
+   * File path to which to write log output.
+   *
+   * @var string
+   */
+  protected string $csvLogFilename = '';
+
+  /**
+   * File pointer for the log filepath.
+   *
+   * @var false|resource
+   */
+  protected $csvLogFile;
+
+  /**
+   * The number of items to attempt to load at a time.
+   *
+   * @var int
+   */
+  protected int $iterationSize = 10;
+
+  /**
+   * File path to which to write output.
+   *
+   * @var string
+   */
+  protected string $csvOutputFilename = '';
+
+  /**
+   * File pointer for the filepath, to which to write output.
+   *
+   * @var resource|false
+   */
+  protected $csvOutputFile;
 
   /**
    * Constructor.
@@ -56,14 +94,23 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
    * @command islandora_drush_utils:missing-derivatives
    * @aliases islandora_drush_utils:md,idu:md
    * @usage drush islandora_drush_utils:missing-derivatives --verbose
-   * @option iteration_size The number of nodes to process per iteration, for tuning.
+   * @option iteration-size The number of nodes to process per iteration, for tuning.
+   * @option csv-output-file The path to a CSV file to which to write output.
+   * @option csv-log-file The path to a CSV file to which to write logging info.
    *
    * @islandora-drush-utils-user-wrap
    */
   public function update(array $options = [
-    'iteration_size' => 10,
+    'iteration-size' => 10,
+    'csv-output-file' => self::REQ,
+    'csv-log-file' => self::REQ,
   ]): void {
     $node_count = $this->getBaseQuery()->count()->execute();
+
+    $this->iterationSize = $options['iteration-size'];
+    $this->csvOutputFilename = $options['csv-output-file'] ?: '';
+    $this->csvLogFilename = $options['csv-log-file'] ?: '';
+    $this->openCsvFiles();
 
     if ($node_count) {
       $batch = [
@@ -75,9 +122,7 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
         'operations' => [
           [
             [$this, 'missingDerivatives'],
-            [
-              $options['iteration_size'],
-            ],
+            [],
           ],
         ],
       ];
@@ -97,6 +142,39 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
   }
 
   /**
+   * Helper; load up file pointers for our output CSV(s).
+   */
+  protected function openCsvFiles() : void {
+    if ($this->csvOutputFilename) {
+      $this->csvOutputFile = fopen($this->csvOutputFilename, 'a');
+    }
+    if ($this->csvLogFilename) {
+      $this->csvLogFile = fopen($this->csvLogFilename, 'a');
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function __sleep() {
+    return array_diff(
+      $this->depSerSleep(),
+      [
+        'csvOutputFile',
+        'csvLogFile',
+      ]
+    );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function __wakeup() : void {
+    $this->depSerWake();
+    $this->openCsvFiles();
+  }
+
+  /**
    * Helper to get the base query to be used.
    *
    * @return \Drupal\Core\Entity\Query\QueryInterface
@@ -111,14 +189,21 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
   }
 
   /**
+   * Emit a log message, if we have been configured to log.
+   */
+  protected function csvLog(string ...$row) : void {
+    if (isset($this->csvLogFile)) {
+      fputcsv($this->csvLogFile, $row);
+    }
+  }
+
+  /**
    * Batch for examining nodes for missing derivatives.
    *
-   * @param int $iteration_size
-   *   The number of nodes to process per batch iteration.
    * @param \DrushBatchContext|array $context
    *   Batch context.
    */
-  public function missingDerivatives(int $iteration_size, \DrushBatchContext|array &$context): void {
+  public function missingDerivatives(\DrushBatchContext|array &$context): void {
     $sandbox =& $context['sandbox'];
     $base_query = $this->getBaseQuery();
 
@@ -139,7 +224,7 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
     }
 
     $base_query->sort('nid');
-    $base_query->range(0, $iteration_size);
+    $base_query->range(0, $this->iterationSize);
 
     $node_ids = $base_query->execute();
     $nodes = $this->nodeStorage->loadMultiple($node_ids) + array_fill_keys($node_ids, FALSE);
@@ -152,6 +237,7 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
               'node' => $nid,
             ]
           );
+          $this->csvLog($nid, 'Failed to load.');
           continue;
         }
         $context['message'] = dt(
@@ -159,8 +245,18 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
             '@node' => $node->id(),
           ]
         );
+        $this->csvLog($node->id(), 'Started.');
 
-        foreach ($this->examiner->examine($node) as $derivative_message) {
+        $messages = $this->examiner->examine($node);
+        foreach ($messages as $derivative_message) {
+          if (isset($this->csvOutputFile)) {
+            fputcsv($this->csvOutputFile, [
+              $node->id(),
+              $derivative_message['bundle'],
+              $derivative_message['use_uri'],
+              $derivative_message['message'],
+            ]);
+          }
           $context['message'] = dt(
             "Missing derivatives detected. \n nid: {node}, bundle: {bundle}, uri: {use_uri}. \n Message: {message}\n", [
               'node' => $node->id(),
@@ -171,10 +267,12 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
           );
         }
         $this->log(
-          "Examination complete for node id: @node.\n", [
+          "Examination complete for node id: @node, finding @count issues.\n", [
             '@node' => $node->id(),
+            '@count' => count($messages),
           ]
         );
+        $this->csvLog($node->id(), 'Finished.', count($messages));
 
       }
       catch (\Exception $e) {
@@ -183,6 +281,7 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
             'exception' => $e,
           ], LogLevel::ERROR
         );
+        $this->csvLog($nid, 'Finished with exception.', '', $e->getMessage(), $e->getTraceAsString());
       }
       $sandbox['completed']++;
       $context['finished'] = $sandbox['completed'] / $sandbox['total'];
