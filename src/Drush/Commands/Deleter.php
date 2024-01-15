@@ -12,7 +12,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\TypedData\TranslatableInterface;
-use Drupal\islandora_drush_utils\Drush\Traits\LoggingTrait;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\LoggingTrait;
 use Drupal\media\MediaInterface;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;

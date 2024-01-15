@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
-use Drupal\islandora_drush_utils\Drush\Traits\LoggingTrait;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\LoggingTrait;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;

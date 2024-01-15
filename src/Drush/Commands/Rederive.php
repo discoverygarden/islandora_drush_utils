@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
 use Drupal\islandora\Plugin\ContextReaction\DerivativeReaction;
-use Drupal\islandora_drush_utils\Drush\Traits\LoggingTrait;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\LoggingTrait;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;

@@ -18,7 +18,7 @@
     "extra": {
         "drush": {
             "services": {
-                "drush.services.yml": "^10 || ^11"
+                "drush.10.services.yml": "^10 || ^11"
             }
         }
     }

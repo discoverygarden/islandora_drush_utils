@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Drush\Commands;
+namespace Drupal\islandora_drush_utils\Drush\CommandInfoAlterers;
 
 use Consolidation\AnnotatedCommand\CommandInfoAltererInterface;
 use Consolidation\AnnotatedCommand\Parser\CommandInfo;
