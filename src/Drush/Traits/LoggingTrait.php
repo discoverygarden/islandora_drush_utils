@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Drush\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Traits;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;

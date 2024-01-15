@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\dgi_standard_derivative_examiner\Utility\ExaminerInterface;
+use Drupal\islandora_drush_utils\Drush\Traits\LoggingTrait;
 use Drupal\node\NodeStorageInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
