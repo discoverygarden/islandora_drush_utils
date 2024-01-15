@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
@@ -22,37 +22,19 @@ class Rederive extends DrushCommands implements ContainerInjectionInterface {
   use LoggingTrait;
 
   /**
-   * Instance of "IslandoraUtils" service, for... utility.
-   *
-   * @var \Drupal\islandora\IslandoraUtils
-   */
-  protected $utils;
-
-  /**
-   * Entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
    * Constructor.
-   *
-   * @param \Drupal\islandora\IslandoraUtils $utils
-   *   An instance of the "IslandoraUtils" service.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager service.
    */
-  public function __construct(IslandoraUtils $utils, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(
+    protected IslandoraUtils $utils,
+    protected EntityTypeManagerInterface $entityTypeManager,
+  ) {
     parent::__construct();
-    $this->utils = $utils;
-    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
    * {@inheritDoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container) : self {
     return new static(
       $container->get('islandora.utils'),
       $container->get('entity_type.manager'),
@@ -71,7 +53,7 @@ class Rederive extends DrushCommands implements ContainerInjectionInterface {
    */
   public function rederive(array $options = [
     'source_uri' => 'http://pcdm.org/use#OriginalFile',
-  ]) {
+  ]) : void {
     $original_file_taxonomy_ids = $this->entityTypeManager->getStorage('taxonomy_term')
       ->getQuery()
       ->condition('field_external_uri', $options['source_uri'])
@@ -97,7 +79,7 @@ class Rederive extends DrushCommands implements ContainerInjectionInterface {
    * @param array|\DrushBatchContext $context
    *   Batch context.
    */
-  public function deriveBatch(array $original_file_taxonomy_ids, &$context) {
+  public function deriveBatch(array $original_file_taxonomy_ids, &$context) : void {
     $sandbox =& $context['sandbox'];
 
     $media_storage = $this->entityTypeManager->getStorage('media');
