@@ -147,7 +147,7 @@ class MissingDerivatives extends DrushCommands implements ContainerInjectionInte
    */
   protected function openCsvFiles() : void {
     if ($this->csvOutputFilename) {
-      $this->csvOutputFile = fopen($this->csvOutputFilename, 'w');
+      $this->csvOutputFile = fopen($this->csvOutputFilename, 'a');
     }
     if ($this->csvLogFilename) {
       $this->csvLogFile = fopen($this->csvLogFilename, 'a');
