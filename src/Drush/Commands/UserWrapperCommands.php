@@ -7,6 +7,7 @@ use Consolidation\AnnotatedCommand\CommandData;
 use Consolidation\AnnotatedCommand\CommandError;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -25,6 +26,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInterface {
 
   use LoggerAwareTrait;
+
+  /**
+   * The user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface|false
+   */
+  protected AccountInterface|false $user = FALSE;
 
   /**
    * Constructor.
@@ -137,6 +145,7 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
       $this->logDebug('to switch back');
       $this->switcher->switchBack();
       $this->logDebug('switched back');
+      $this->user = FALSE;
     }
 
     return $result;
