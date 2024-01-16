@@ -28,7 +28,9 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
   use LoggerAwareTrait;
 
   /**
-   * The user.
+   * The user to which we will switch.
+   *
+   * Either some form of account object, or boolean FALSE.
    *
    * @var \Drupal\Core\Session\AccountInterface|false
    */
