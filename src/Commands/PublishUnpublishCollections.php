@@ -5,8 +5,8 @@ namespace Drupal\islandora_drush_utils\Commands;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drush\Commands\DrushCommands;
 use Drupal\islandora\IslandoraUtils;
+use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
 
 /**
