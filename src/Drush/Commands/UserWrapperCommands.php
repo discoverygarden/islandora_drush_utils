@@ -1,12 +1,13 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Consolidation\AnnotatedCommand\AnnotationData;
 use Consolidation\AnnotatedCommand\CommandData;
 use Consolidation\AnnotatedCommand\CommandError;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -27,42 +28,22 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
   use LoggerAwareTrait;
 
   /**
-   * Need access to entities to test users.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * Account switcher to do the switching.
-   *
-   * @var \Drupal\Core\Session\AccountSwitcherInterface
-   */
-  protected $switcher;
-
-  /**
    * The user to which we will switch.
    *
    * Either some form of account object, or boolean FALSE.
    *
    * @var \Drupal\Core\Session\AccountInterface|false
    */
-  protected $user = FALSE;
-
-  /**
-   * Flag if debug messages should be logged.
-   *
-   * @var bool
-   */
-  protected $debug;
+  protected AccountInterface|false $user = FALSE;
 
   /**
    * Constructor.
    */
-  public function __construct(AccountSwitcherInterface $account_switcher, EntityTypeManagerInterface $entity_type_manager, $debug = FALSE) {
-    $this->switcher = $account_switcher;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->debug = $debug;
+  public function __construct(
+    protected AccountSwitcherInterface $switcher,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected $debug = FALSE,
+  ) {
   }
 
   /**
@@ -166,6 +147,7 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
       $this->logDebug('to switch back');
       $this->switcher->switchBack();
       $this->logDebug('switched back');
+      $this->user = FALSE;
     }
 
     return $result;

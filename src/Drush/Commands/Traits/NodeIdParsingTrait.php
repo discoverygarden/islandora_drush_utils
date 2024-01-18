@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands\Traits;
 
 /**
  * Facilitate parsing structures of node IDs.
