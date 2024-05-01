@@ -57,3 +57,9 @@ services:
       - '@logger.islandora_drush_utils'
     tags:
       - { name: drush.command }
+  islandora_drush_utils.rebuild_oai:
+    class: \Drupal\islandora_drush_utils\Commands\RebuildOaiEntries
+    arguments:
+      - '@queue'
+    tags:
+      - { name: drush.command }
