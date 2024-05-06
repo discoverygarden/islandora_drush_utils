@@ -74,14 +74,6 @@ drush islandora_drush_utils:null-child-weight-updater --verbose
 
 This command identifies and updates nodes that have a mix of null and integer values in field_weight.
 
-### Derivatives Generator
-
-```bash
-drush islandora_drush_utils:derivativesgenerator --model_name="Image" --user=islandora
-```
-
-Re-generates all derivatives for a given list of pids (comma separated list of pids or a file), model name or model uri. Specify 'media_use_uri' to target derivatives, defaults to 'http://pcdm.org/use#ThumbnailImage'.
-
 ### User wrapper
 
 ```bash
