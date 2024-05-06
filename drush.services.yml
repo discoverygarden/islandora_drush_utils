@@ -37,18 +37,6 @@ services:
     arguments: ['@service_container']
     tags:
       - name: drush.command
-  islandora_drush_utils.missing_derivatives:
-    class: \Drupal\islandora_drush_utils\Commands\MissingDerivatives
-    factory: [null, create]
-    arguments: ['@service_container']
-    tags:
-      - name: drush.command
-  islandora_drush_utils.derivatives_generator:
-    class: \Drupal\islandora_drush_utils\Commands\DerivativesGenerator
-    factory: [null, create]
-    arguments: ['@service_container']
-    tags:
-      - name: drush.command
   islandora_drush_utils.bulk_publish_unpublish:
     class: \Drupal\islandora_drush_utils\Commands\PublishUnpublishCollections
     arguments:
