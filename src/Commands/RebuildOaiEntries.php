@@ -73,34 +73,28 @@ class RebuildOaiEntries extends DrushCommands {
    */
   public function rebuildBatch(int $batch_size, &$context) {
     $queue = $this->queue->get('rest_oai_pmh_views_cache_cron');
-    $queue_total_items = $queue->numberOfItems();
-
-    // If no items are found, set the context finished and show a message.
-    if (!($queue_total_items > 0)) {
-      $context['finished'] = 1;
+    if (empty($context['sandbox'])) {
+      $context['sandbox']['progress'] = 0;
+      $context['sandbox']['total'] = $queue->numberOfItems();
     }
-    else {
-      // Setting the defaults.
-      if (empty($context['sandbox'])) {
-        $context['sandbox']['processed_items'] = 0;
-        $context['sandbox']['total_items'] = $queue_total_items;
-      }
-
-      $start = $context['sandbox']['processed_items'];
-      $end = $start + $batch_size;
-      $end = min($end, $context['sandbox']['total_items']);
-
-      // Processing the queue items.
-      while ($context['sandbox']['processed_items'] < $end) {
-        $item = $queue->claimItem();
-        rest_oai_pmh_process_queue($item);
-
-        $context['sandbox']['processed_items']++;
-      }
-
-      // Set the batch progress percentage.
-      $context['finished'] = $context['sandbox']['processed_items'] / $context['sandbox']['total_items'];
+    
+    $item = $queue->claimItem();
+    if (!$item) {
+      // Queue exhausted; we're done. Shouldn't strictly be necessary, but we could explicitly
+      // set `$context['finished'] = 1;` if we wanted to.
+      return;
     }
+    
+    rest_oai_pmh_process_queue($item);
+
+    $context['sandbox']['processed_items']++;
+    
+    $context['finished'] =  $context['sandbox']['processed_items'] / (
+      // XXX: Force queue exhaustion above to terminate.
+      $context['sandbox']['processed_items'] >= $context['sandbox']['total_items'] ?
+        $context['sandbox']['processed_items'] + 1 : 
+        $context['sandbox']['total_items']
+      ));
   }
 
 }
