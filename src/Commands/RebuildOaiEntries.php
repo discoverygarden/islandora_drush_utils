@@ -87,14 +87,9 @@ class RebuildOaiEntries extends DrushCommands {
       return;
     }
 
-    $start = $context['sandbox']['processed_items'];
-    $end = $start + $batch_size;
-    $end = min($end, $context['sandbox']['total_items']);
-
-    while ($context['sandbox']['processed_items'] < $end) {
-      rest_oai_pmh_process_queue($item);
-      $context['sandbox']['processed_items']++;
-    }
+    // Process queue items.
+    rest_oai_pmh_process_queue($item);
+    $context['sandbox']['processed_items']++;
 
     // Set the batch progress percentage.
     $context['finished'] = $context['sandbox']['processed_items'] / $context['sandbox']['total_items'];
