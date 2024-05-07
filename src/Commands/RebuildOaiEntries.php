@@ -2,6 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Commands;
 
+use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Queue\QueueFactory;
 use Drush\Commands\DrushCommands;
 
@@ -11,6 +12,8 @@ use Drush\Commands\DrushCommands;
  * These commands rebuild the OAI entries and consume them.
  */
 class RebuildOaiEntries extends DrushCommands {
+
+  use DependencySerializationTrait;
 
   /**
    * The queue service.
@@ -32,31 +35,72 @@ class RebuildOaiEntries extends DrushCommands {
   /**
    * Rebuild OAI entries.
    *
+   * @param array $options
+   *   Additional command options.
+   *
+   * @option batchSize An integer of the amount of entries to process per batch.
+   *
    * @command islandora_drush_utils:rebuild-oai
    * @aliases idr:roai
    */
-  public function rebuild() {
+  public function rebuild(array $options = [
+    'batchSize' => 10,
+  ]) {
     rest_oai_pmh_cache_views();
 
-    $operations = [];
-    $queue = $this->queue->get('rest_oai_pmh_views_cache_cron');
-    while ($item = $queue->claimItem()) {
-      $operations[] = [
-        'rest_oai_pmh_process_queue',
-        [$item],
-      ];
-    }
     $batch = [
-      'operations' => $operations,
-      'finished' => 'rest_oai_pmh_batch_finished',
       'title' => 'Processing OAI rebuild',
-      'init_message' => 'OAI rebuild is starting.',
-      'progress_message' => 'Processed @current out of @total.',
-      'error_message' => 'OAI rebuild has encountered an error.',
+      'finished' => 'rest_oai_pmh_batch_finished',
+      'operations' => [
+        [
+          [$this, 'rebuildBatch'],
+          [$options['batchSize']],
+        ],
+      ],
     ];
 
     batch_set($batch);
     drush_backend_batch_process();
+  }
+
+  /**
+   * Batch for processing OAI queue.
+   *
+   * @param int $batch_size
+   *   The number of nodes to process at a single time.
+   * @param array|\DrushBatchContext $context
+   *   The batch context.
+   */
+  public function rebuildBatch(int $batch_size, &$context) {
+    $queue = $this->queue->get('rest_oai_pmh_views_cache_cron');
+    $queue_total_items = $queue->numberOfItems();
+
+    // If no items are found, set the context finished and show a message.
+    if (!($queue_total_items > 0)) {
+      $context['finished'] = 1;
+    }
+    else {
+      // Setting the defaults.
+      if (empty($context['sandbox'])) {
+        $context['sandbox']['processed_items'] = 0;
+        $context['sandbox']['total_items'] = $queue_total_items;
+      }
+
+      $start = $context['sandbox']['processed_items'];
+      $end = $start + $batch_size;
+      $end = min($end, $context['sandbox']['total_items']);
+
+      // Processing the queue items.
+      while ($context['sandbox']['processed_items'] < $end) {
+        $item = $queue->claimItem();
+        rest_oai_pmh_process_queue($item);
+
+        $context['sandbox']['processed_items']++;
+      }
+
+      // Set the batch progress percentage.
+      $context['finished'] = $context['sandbox']['processed_items'] / $context['sandbox']['total_items'];
+    }
   }
 
 }
