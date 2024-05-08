@@ -4,6 +4,7 @@ namespace Drupal\islandora_drush_utils\Commands;
 
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -14,6 +15,7 @@ use Drush\Commands\DrushCommands;
 class RebuildOaiEntries extends DrushCommands {
 
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   /**
    * The queue service.
@@ -35,26 +37,19 @@ class RebuildOaiEntries extends DrushCommands {
   /**
    * Rebuild OAI entries.
    *
-   * @param array $options
-   *   Additional command options.
-   *
-   * @option batchSize An integer of the amount of entries to process per batch.
-   *
    * @command islandora_drush_utils:rebuild-oai
    * @aliases idr:roai
    */
-  public function rebuild(array $options = [
-    'batchSize' => 10,
-  ]) {
+  public function rebuild() {
     rest_oai_pmh_cache_views();
 
     $batch = [
-      'title' => 'Processing OAI rebuild',
+      'title' => $this->t('Processing OAI rebuild'),
       'finished' => 'rest_oai_pmh_batch_finished',
       'operations' => [
         [
           [$this, 'rebuildBatch'],
-          [$options['batchSize']],
+          [],
         ],
       ],
     ];
@@ -66,12 +61,10 @@ class RebuildOaiEntries extends DrushCommands {
   /**
    * Batch for processing OAI queue.
    *
-   * @param int $batch_size
-   *   The number of nodes to process at a single time.
    * @param array|\DrushBatchContext $context
    *   The batch context.
    */
-  public function rebuildBatch(int $batch_size, &$context) {
+  public function rebuildBatch(&$context) {
     $queue = $this->queue->get('rest_oai_pmh_views_cache_cron');
 
     // Setting the defaults.
@@ -91,8 +84,12 @@ class RebuildOaiEntries extends DrushCommands {
     rest_oai_pmh_process_queue($item);
     $context['sandbox']['processed_items']++;
 
-    // Set the batch progress percentage.
-    $context['finished'] = $context['sandbox']['processed_items'] / $context['sandbox']['total_items'];
+    $context['finished'] = $context['sandbox']['processed_items'] / (
+      // XXX: Force queue exhaustion above to terminate.
+      $context['sandbox']['processed_items'] >= $context['sandbox']['total_items'] ?
+        $context['sandbox']['processed_items'] + 1 :
+        $context['sandbox']['total_items']
+      );
   }
 
 }
