@@ -6,8 +6,8 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drupal\islandora_drush_utils\Drush\Commands\Traits\NodeIdParsingTrait;
+use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
