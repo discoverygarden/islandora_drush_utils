@@ -1,11 +1,12 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\NodeIdParsingTrait;
 use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -19,31 +20,18 @@ class GenerateThumbnails extends DrushCommands implements ContainerInjectionInte
   use NodeIdParsingTrait;
 
   /**
-   * Entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $storage;
-
-  /**
-   * Database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $database;
-
-  /**
    * Constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $storage
    *   The entity type manager service.
    * @param \Drupal\Core\Database\Connection $database
    *   A Drupal database connection.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database) {
+  public function __construct(
+    protected EntityTypeManagerInterface $storage,
+    protected Connection $database,
+  ) {
     parent::__construct();
-    $this->storage = $entity_type_manager;
-    $this->database = $database;
   }
 
   /**
