@@ -1,14 +1,16 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Consolidation\AnnotatedCommand\CommandData;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\LoggingTrait;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
@@ -24,27 +26,6 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
   use LoggingTrait;
 
   /**
-   * Entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * Drupal database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected Connection $database;
-
-  /**
-   * Islandora utils service.
-   *
-   * @var \Drupal\islandora\IslandoraUtils
-   */
-  protected IslandoraUtils $utils;
-
-  /**
    * The options for the Drush command.
    *
    * @var array|null
@@ -53,25 +34,19 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
 
   /**
    * Constructor.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager service.
-   * @param \Drupal\Core\Database\Connection $database
-   *   The Drupal database connection.
-   * @param \Drupal\islandora\IslandoraUtils $utils
-   *   The Islandora utils service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, Connection $database, IslandoraUtils $utils) {
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected Connection $database,
+    protected IslandoraUtils $utils,
+  ) {
     parent::__construct();
-    $this->entityTypeManager = $entity_type_manager;
-    $this->database = $database;
-    $this->utils = $utils;
   }
 
   /**
    * {@inheritDoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container) : self {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('database'),
@@ -98,7 +73,7 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
    */
   public function update(string $parent_nid, array $options = [
     'dry-run' => FALSE,
-  ]) {
+  ]) : void {
     $this->options = $options;
 
     // XXX: Determine whether this parent has children that are heterogeneous
@@ -161,7 +136,7 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
    *
    * @hook validate islandora_drush_utils:null-child-weight-updater
    */
-  public function validateUpdate(CommandData $command_data) {
+  public function validateUpdate(CommandData $command_data) : void {
     $parent_nid = $command_data->input()->getArgument('parent_nid');
 
     $parent = $this->entityTypeManager->getStorage('node')->load($parent_nid);
@@ -183,7 +158,7 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
    * @return \Drupal\Core\Entity\Query\QueryInterface
    *   The query to be run.
    */
-  protected function getBaseQuery($parent_nid) {
+  protected function getBaseQuery(string $parent_nid) : QueryInterface {
     $node_storage = $this->entityTypeManager->getStorage('node');
     $base_query = $node_storage->getQuery()
       ->condition('field_member_of', $parent_nid)
@@ -202,7 +177,7 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
    * @param array|\DrushBatchContext $context
    *   Batch context.
    */
-  public function weightBatch(string $parent_nid, int $starting_weight, &$context) {
+  public function weightBatch(string $parent_nid, int $starting_weight, &$context) : void {
     $sandbox =& $context['sandbox'];
 
     $base_query = $this->getBaseQuery($parent_nid);

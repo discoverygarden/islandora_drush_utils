@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Drupal\Component\Utility\Random;
 use Drupal\Core\Database\Connection;
@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\Core\TypedData\TranslatableInterface;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\LoggingTrait;
 use Drupal\media\MediaInterface;
 use Drupal\node\NodeInterface;
 use Drush\Commands\DrushCommands;
@@ -28,34 +29,6 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
   }
 
   use LoggingTrait;
-
-  /**
-   * The database connection service.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected Connection $database;
-
-  /**
-   * The entity type manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The entity field manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
-   */
-  protected EntityFieldManagerInterface $entityFieldManager;
-
-  /**
-   * The queue factory service.
-   *
-   * @var \Drupal\Core\Queue\QueueFactory
-   */
-  protected QueueFactory $queueFactory;
 
   /**
    * The node storage service.
@@ -103,16 +76,12 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
    * Constructor.
    */
   public function __construct(
-        EntityTypeManagerInterface $entity_type_manager,
-        QueueFactory $queue_factory,
-        Connection $database,
-        EntityFieldManagerInterface $entity_field_manager
+        protected EntityTypeManagerInterface $entityTypeManager,
+        protected QueueFactory $queueFactory,
+        protected Connection $database,
+        protected EntityFieldManagerInterface $entityFieldManager
     ) {
     parent::__construct();
-    $this->entityTypeManager = $entity_type_manager;
-    $this->entityFieldManager = $entity_field_manager;
-    $this->queueFactory = $queue_factory;
-    $this->database = $database;
 
     $this->queuePrefix = implode(
           '.', [
@@ -127,7 +96,7 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
   /**
    * {@inheritDoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container) : self {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('queue'),

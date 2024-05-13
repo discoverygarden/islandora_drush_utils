@@ -1,11 +1,12 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\NodeIdParsingTrait;
 use Drupal\islandora_drush_utils\Services\DerivativesGeneratorBatchService;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -20,21 +21,12 @@ class DerivativesGenerator extends DrushCommands implements ContainerInjectionIn
   use NodeIdParsingTrait;
 
   /**
-   * Entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
    * Constructor.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(
+    protected EntityTypeManagerInterface $entityTypeManager,
+  ) {
     parent::__construct();
-    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**

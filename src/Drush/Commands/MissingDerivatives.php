@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\dgi_standard_derivative_examiner\Utility\ExaminerInterface;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\LoggingTrait;
 use Drupal\node\NodeStorageInterface;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LogLevel;
