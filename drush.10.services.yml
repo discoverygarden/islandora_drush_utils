@@ -67,7 +67,7 @@ services:
     tags:
       - { name: drush.command }
   islandora_drush_utils.rebuild_oai:
-    class: \Drupal\islandora_drush_utils\Commands\RebuildOaiEntries
+    class: \Drupal\islandora_drush_utils\Drush\Commands\RebuildOaiEntries
     arguments:
       - '@queue'
     tags:
