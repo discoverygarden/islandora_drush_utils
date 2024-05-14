@@ -1,0 +1,74 @@
+---
+services:
+  islandora_drush_utils.deleter:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\Deleter
+    arguments:
+      - '@entity_type.manager'
+      - '@queue'
+      - '@database'
+      - '@entity_field.manager'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.rederiver:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\Rederive
+    arguments:
+      - '@islandora.utils'
+      - '@entity_type.manager'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.rederive_thumbnails:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\GenerateThumbnails
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.command.user_wrapper:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\UserWrapperCommands
+    arguments:
+      - '@account_switcher'
+      - '@entity_type.manager'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.command.user_wrapping_alterer:
+    class: \Drupal\islandora_drush_utils\Drush\CommandInfoAlterers\UserWrappingAlterer
+    tags:
+      - name: drush.command_info_alterer
+    arguments:
+      - '@logger.islandora_drush_utils'
+      - false
+  islandora_drush_utils.null_child_weight_updater:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\NullChildWeight
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+      - '@islandora.utils'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.missing_derivatives:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\MissingDerivatives
+    arguments:
+      - '@entity_type.manager'
+      - '@dgi_standard_derivative_examiner.examiner'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.derivatives_generator:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\DerivativesGenerator
+    arguments:
+      - '@entity_type.manager'
+    tags:
+      - name: drush.command
+  islandora_drush_utils.bulk_publish_unpublish:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\PublishUnpublishCollections
+    arguments:
+      - '@entity_type.manager'
+      - '@islandora.utils'
+      - '@logger.islandora_drush_utils'
+    tags:
+      - { name: drush.command }
+  islandora_drush_utils.rebuild_oai:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\RebuildOaiEntries
+    arguments:
+      - '@queue'
+    tags:
+      - name: drush.command
