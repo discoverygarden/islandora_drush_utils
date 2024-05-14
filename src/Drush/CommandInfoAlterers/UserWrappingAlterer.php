@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\islandora_drush_utils\Commands;
+namespace Drupal\islandora_drush_utils\Drush\CommandInfoAlterers;
 
 use Consolidation\AnnotatedCommand\CommandInfoAltererInterface;
 use Consolidation\AnnotatedCommand\Parser\CommandInfo;
@@ -30,31 +30,19 @@ class UserWrappingAlterer implements CommandInfoAltererInterface {
   ];
 
   /**
-   * The logger to use.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
-
-  /**
-   * Whether we should emit debug messages.
-   *
-   * @var bool
-   */
-  protected $debug;
-
-  /**
    * Constructor.
    */
-  public function __construct(LoggerInterface $logger, $debug = FALSE) {
-    $this->logger = $logger;
-    $this->debug = $debug;
+  public function __construct(
+    protected LoggerInterface $logger,
+    protected $debug = FALSE,
+  ) {
+    // No-op.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterCommandInfo(CommandInfo $commandInfo, $commandFileInstance) {
+  public function alterCommandInfo(CommandInfo $commandInfo, $commandFileInstance) : void {
     if (!$commandInfo->hasAnnotation(static::ANNO) && in_array($commandInfo->getName(), static::COMMANDS)) {
       if ($this->debug) {
         $this->logger->debug(
