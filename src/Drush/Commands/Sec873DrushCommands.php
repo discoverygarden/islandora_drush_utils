@@ -5,17 +5,18 @@ namespace Drupal\islandora_drush_utils\Drush\Commands;
 use Consolidation\AnnotatedCommand\Attributes\HookSelector;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Query\SelectInterface;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\entity_reference_revisions\Plugin\Field\FieldType\EntityReferenceRevisionsItem;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\user\UserInterface;
 use Drush\Attributes as CLI;
+use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Commands helping around fixing issues with SEC-873.
@@ -25,37 +26,32 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see https://www.drupal.org/project/views_bulk_edit/issues/3084329
  */
-class Sec873Commands extends DrushCommands implements ContainerInjectionInterface {
+class Sec873DrushCommands extends DrushCommands {
+
+  use AutowireTrait;
 
   const IDS_META = 'sec-873-ids-alias';
   const COUNT_META = 'sec-873-count';
+
+  protected ?UserInterface $currentUserAsUser = NULL;
 
   /**
    * Constructor.
    */
   public function __construct(
+    #[Autowire(service: 'entity_field.manager')]
     protected EntityFieldManagerInterface $entityFieldManager,
+    #[Autowire(service: 'entity_type.manager')]
     protected EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'database')]
     protected Connection $database,
-    protected AccountInterface $currentUser,
+    #[Autowire(service: 'current_user')]
+    protected ?AccountInterface $currentUser,
+    #[Autowire(service: 'logger.islandora_drush_utils.sec_873')]
+    LoggerInterface $logger,
   ) {
     parent::__construct();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public static function create(ContainerInterface $container) {
-    $instance = new static(
-      $container->get('entity_field.manager'),
-      $container->get('entity_type.manager'),
-      $container->get('database'),
-      $container->get('current_user'),
-    );
-
-    $instance->setLogger($container->get('logger.islandora_drush_utils.sec_873'));
-
-    return $instance;
+    $this->setLogger($logger);
   }
 
   /**
@@ -71,7 +67,7 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  protected function getTargetTables() {
+  protected function getTargetTables() : \Traversable {
     foreach ($this->entityFieldManager->getFieldMapByFieldType('entity_reference_revisions') as $entity_type_id => $info) {
       $storage = $this->entityTypeManager->getStorage($entity_type_id);
       if (!$storage instanceof SqlContentEntityStorage) {
@@ -185,7 +181,7 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  #[CLI\Command('islandora_drush_utils:sec-873:get-current')]
+  #[CLI\Command(name: 'islandora_drush_utils:sec-873:get-current')]
   public function getCurrent(array $options = []) : void {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
@@ -219,7 +215,7 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  #[CLI\Command('islandora_drush_utils:sec-873:get-revisions')]
+  #[CLI\Command(name: 'islandora_drush_utils:sec-873:get-revisions')]
   public function getRevisions(array $options = []) : void {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
@@ -256,7 +252,7 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
    * @param array $options
    *   Options, see attributes for details.
    */
-  #[CLI\Command('islandora_drush_utils:sec-873:repair')]
+  #[CLI\Command(name: 'islandora_drush_utils:sec-873:repair')]
   #[CLI\Option(name: 'dry-run', description: 'Flag to avoid making changes.')]
   #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
   public function repair(
@@ -264,6 +260,8 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
       'dry-run' => self::OPT,
     ],
   ) : void {
+    /** @var \Drupal\Core\Entity\RevisionableStorageInterface $paragraph_storage */
+    $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
     while ($row = fgetcsv(STDIN)) {
       [$entity_type, $field_name, $paragraph_id, , $_id_csv] = $row;
       $ids = explode(',', $_id_csv);
@@ -272,29 +270,58 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
       try {
         /** @var \Drupal\Core\Entity\ContentEntityInterface[] $entities */
         $entities = $this->entityTypeManager->getStorage($entity_type)->loadMultiple($ids);
-        foreach ($entities as $id => $entity) {
+        foreach ($entities as $entity) {
+          $this->logger->debug('Processing {entity_type}:{entity_id}:{field_name}:{paragraph_id}', [
+            'entity_type' => $entity->getEntityTypeId(),
+            'entity_id' => $entity->id(),
+            'field_name' => $field_name,
+            'paragraph_id' => $paragraph_id,
+          ]);
           /** @var \Drupal\entity_reference_revisions\EntityReferenceRevisionsFieldItemList $paragraph_list */
           $paragraph_list = $entity->get($field_name);
 
           $to_replace = NULL;
           $to_delete = [];
+          /** @var \Drupal\entity_reference_revisions\Plugin\Field\FieldType\EntityReferenceRevisionsItem $item */
           foreach ($paragraph_list as $index => $item) {
-            if ($item->get('target_id') !== $paragraph_id) {
+            if ($item->get('target_id')->getValue() !== $paragraph_id) {
               continue;
             }
             if ($to_replace === NULL) {
               $to_replace = $index;
+              $this->logger->debug('Replacing {entity_type}:{entity_id}:{field_name}:target_id {paragraph_id} @ delta {delta}', [
+                'entity_type' => $entity->getEntityTypeId(),
+                'entity_id' => $entity->id(),
+                'field_name' => $field_name,
+                'paragraph_id' => $paragraph_id,
+                'delta' => $index,
+              ]);
             }
             else {
+              // XXX: Unlikely to encounter, but _if_ there were somehow
+              // multiple references to the same paragraph in a given field,
+              // this would handle de-duping them (which is to say, deleting the
+              // extra references).
               $to_delete[] = $index;
+              $this->logger->debug('Deleting {entity_type}:{entity_id}:{field_name}:target_id {paragraph_id} @ delta {delta}', [
+                'entity_type' => $entity->getEntityTypeId(),
+                'entity_id' => $entity->id(),
+                'field_name' => $field_name,
+                'paragraph_id' => $paragraph_id,
+                'delta' => $index,
+              ]);
             }
           }
 
-          $item = clone $paragraph_list->get($to_replace);
-          $item->setValue('target_id', NULL);
-          $paragraph_list->set($to_replace, $item);
+          $info = $paragraph_list->get($to_replace)->getValue();
+          /** @var \Drupal\paragraphs\Entity\Paragraph $item */
+          $item = $paragraph_storage->loadRevision($info['target_revision_id']);
+          /** @var \Drupal\paragraphs\Entity\Paragraph $dupe */
+          $dupe = $item->createDuplicate();
+          $dupe->setParentEntity($entity, $field_name);
+          $paragraph_list->set($to_replace, $dupe);
 
-          // XXX: Need to unset for end to start, as the list will rekey itself
+          // XXX: Need to unset from end to start, as the list will rekey itself
           // automatically.
           foreach (array_reverse($to_delete) as $index_to_delete) {
             unset($paragraph_list[$index_to_delete]);
@@ -302,17 +329,48 @@ class Sec873Commands extends DrushCommands implements ContainerInjectionInterfac
 
           $entity->setNewRevision();
           if ($entity instanceof RevisionLogInterface) {
-            $entity->setRevisionUser($this->currentUser);
+            if ($this->currentUser) {
+              $entity->setRevisionUser($this->getCurrentUser());
+            }
             $entity->setRevisionLogMessage("Reworked away from the shared cross-entity paragraph entity {$paragraph_id}.");
           }
-          $entity->save();
+          if (!$options['dry-run']) {
+            $entity->save();
+            $this->logger->info('Updated {entity_id} away from {paragraph_id}.', [
+              'entity_id' => $entity->id(),
+              'paragraph_id' => $paragraph_id,
+            ]);
+          }
+          else {
+            $this->logger->info('Would update {entity_id} away from {paragraph_id}.', [
+              'entity_id' => $entity->id(),
+              'paragraph_id' => $paragraph_id,
+            ]);
+          }
         }
       }
       catch (\Exception $e) {
         $transaction->rollBack();
         throw new \Exception("Encountered exception, rolled back transaction.", previous: $e);
       }
+      if ($options['dry-run']) {
+        $transaction->rollBack();
+        $this->logger->debug('Dry run, rolling back paragraphs.');
+      }
     }
+  }
+
+  /**
+   * Load actual entity of the current user.
+   *
+   * @return \Drupal\user\UserInterface
+   *   User entity for the current user.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  protected function getCurrentUser() : UserInterface {
+    return $this->currentUserAsUser ??= $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
   }
 
 }
