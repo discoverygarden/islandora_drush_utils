@@ -33,6 +33,11 @@ class Sec873DrushCommands extends DrushCommands {
   const IDS_META = 'sec-873-ids-alias';
   const COUNT_META = 'sec-873-count';
 
+  /**
+   * Memoized entity for the current user.
+   *
+   * @var \Drupal\user\UserInterface|null
+   */
   protected ?UserInterface $currentUserAsUser = NULL;
 
   /**
