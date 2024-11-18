@@ -62,11 +62,13 @@ class GenerateThumbnails extends DrushCommands implements ContainerInjectionInte
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function rederive(array $options = [
-    'nids' => self::REQ,
-    'bundle' => 'islandora_object',
-    'model' => self::REQ,
-  ]) {
+  public function rederive(
+    array $options = [
+      'nids' => self::REQ,
+      'bundle' => 'islandora_object',
+      'model' => self::REQ,
+    ],
+  ) {
     $entities = [];
 
     if (is_null($options['nids'])) {

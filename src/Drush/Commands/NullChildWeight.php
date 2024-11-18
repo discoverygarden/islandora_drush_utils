@@ -71,9 +71,12 @@ class NullChildWeight extends DrushCommands implements ContainerInjectionInterfa
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function update(string $parent_nid, array $options = [
-    'dry-run' => FALSE,
-  ]) : void {
+  public function update(
+    string $parent_nid,
+    array $options = [
+      'dry-run' => FALSE,
+    ],
+  ) : void {
     $this->options = $options;
 
     // XXX: Determine whether this parent has children that are heterogeneous
