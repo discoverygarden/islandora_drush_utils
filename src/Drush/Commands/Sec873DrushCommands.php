@@ -187,6 +187,10 @@ class Sec873DrushCommands extends DrushCommands {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   #[CLI\Command(name: 'islandora_drush_utils:sec-873:get-current')]
+  #[CLI\Help(description: 'Identify current revisions referencing the same entities. The CSV output of this command can be passed to `drush islandora_drush_utils:sec-873:repair`')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current', description: 'Base execution, logging and dumping CSV to stdout.')]
+  #[CLI\Usage(name: 'drush -vvv islandora_drush_utils:sec-873:get-current', description: 'Base execution with ALL the debug output.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current > current.csv', description: 'Base execution, logging to stderr and dumping CSV to current.csv via stdout.')]
   public function getCurrent(array $options = []) : void {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
@@ -221,6 +225,10 @@ class Sec873DrushCommands extends DrushCommands {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   #[CLI\Command(name: 'islandora_drush_utils:sec-873:get-revisions')]
+  #[CLI\Help(description: 'Identify all revisions referencing the same entities. This is intended to be more informative than actionable.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-revisions', description: 'Base execution, logging and dumping CSV to stdout.')]
+  #[CLI\Usage(name: 'drush -vvv islandora_drush_utils:sec-873:get-revisions', description: 'Base execution with ALL the debug output.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-revisions > revisions.csv', description: 'Base execution, logging to stderr and dumping CSV to current.csv via stdout.')]
   public function getRevisions(array $options = []) : void {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
@@ -258,7 +266,10 @@ class Sec873DrushCommands extends DrushCommands {
    *   Options, see attributes for details.
    */
   #[CLI\Command(name: 'islandora_drush_utils:sec-873:repair')]
+  #[CLI\Help(description: 'Given CSV to process representing paragraphs which are referenced across different entities, create entity-specific instances in the newest revisions.')]
   #[CLI\Option(name: 'dry-run', description: 'Flag to avoid making changes.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:repair --user=1 < current.csv', description: 'Consume from pre-run CSV.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current | drush islandora_drush_utils:sec-873:repair --user=1', description: 'Consume CSV from pipe.')]
   #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
   public function repair(
     array $options = [
