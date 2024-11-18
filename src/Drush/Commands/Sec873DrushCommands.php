@@ -191,6 +191,7 @@ class Sec873DrushCommands extends DrushCommands {
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current', description: 'Base execution, logging and dumping CSV to stdout.')]
   #[CLI\Usage(name: 'drush -vvv islandora_drush_utils:sec-873:get-current', description: 'Base execution with ALL the debug output.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current > current.csv', description: 'Base execution, logging to stderr and dumping CSV to current.csv via stdout.')]
+  #[CLI\ValidateModulesEnabled(modules: ['paragraphs'])]
   public function getCurrent(array $options = []) : void {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
@@ -229,6 +230,7 @@ class Sec873DrushCommands extends DrushCommands {
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-revisions', description: 'Base execution, logging and dumping CSV to stdout.')]
   #[CLI\Usage(name: 'drush -vvv islandora_drush_utils:sec-873:get-revisions', description: 'Base execution with ALL the debug output.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-revisions > revisions.csv', description: 'Base execution, logging to stderr and dumping CSV to current.csv via stdout.')]
+  #[CLI\ValidateModulesEnabled(modules: ['paragraphs'])]
   public function getRevisions(array $options = []) : void {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
@@ -271,6 +273,7 @@ class Sec873DrushCommands extends DrushCommands {
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:repair --user=1 < current.csv', description: 'Consume from pre-run CSV.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current | drush islandora_drush_utils:sec-873:repair --user=1', description: 'Consume CSV from pipe.')]
   #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
+  #[CLI\ValidateModulesEnabled(modules: ['paragraphs'])]
   public function repair(
     array $options = [
       'dry-run' => self::OPT,
