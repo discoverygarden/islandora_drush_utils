@@ -5,16 +5,20 @@ namespace Drupal\islandora_drush_utils\Drush\Commands;
 use Consolidation\AnnotatedCommand\Attributes\HookSelector;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Query\SelectInterface;
+use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
+use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\Queue\ReliableQueueInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\islandora_drush_utils\Drush\Commands\Traits\WrappedCommandVerbosityTrait;
 use Drupal\user\UserInterface;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
+use Drush\Drush;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -29,6 +33,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 class Sec873DrushCommands extends DrushCommands {
 
   use AutowireTrait;
+  use DependencySerializationTrait;
+  use WrappedCommandVerbosityTrait;
 
   const IDS_META = 'sec-873-ids-alias';
   const COUNT_META = 'sec-873-count';
@@ -54,6 +60,8 @@ class Sec873DrushCommands extends DrushCommands {
     protected ?AccountInterface $currentUser,
     #[Autowire(service: 'logger.islandora_drush_utils.sec_873')]
     LoggerInterface $logger,
+    #[Autowire(service: 'queue')]
+    protected QueueFactory $queueFactory,
   ) {
     parent::__construct();
     $this->setLogger($logger);
@@ -268,8 +276,9 @@ class Sec873DrushCommands extends DrushCommands {
    *   Options, see attributes for details.
    */
   #[CLI\Command(name: 'islandora_drush_utils:sec-873:repair')]
-  #[CLI\Help(description: 'Given CSV to process representing paragraphs which are referenced across different entities, create entity-specific instances in the newest revisions.')]
+  #[CLI\Help(description: 'Given CSV to process representing paragraphs which are referenced across different entities, create entity-specific instances in the newest revisions. Thin wrapper around the enqueue and batch commands.')]
   #[CLI\Option(name: 'dry-run', description: 'Flag to avoid making changes.')]
+  #[CLI\Option(name: 'batch-size', description: 'The number of items which are processed per batch.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:repair --user=1 < current.csv', description: 'Consume from pre-run CSV.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current | drush islandora_drush_utils:sec-873:repair --user=1', description: 'Consume CSV from pipe.')]
   #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
@@ -277,119 +286,99 @@ class Sec873DrushCommands extends DrushCommands {
   public function repair(
     array $options = [
       'dry-run' => self::OPT,
+      'batch-size' => 100,
     ],
   ) : void {
-    /** @var \Drupal\Core\Entity\RevisionableStorageInterface $paragraph_storage */
-    $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
+    $this->enqueue([
+      'batch-size' => $options['batch-size'] ?? 100,
+    ]);
+    $this->processQueue([
+      'dry-run' => $options['dry-run'] ?? FALSE,
+    ]);
+  }
+
+  /**
+   * Helper; get queue to use.
+   *
+   * @return \Drupal\Core\Queue\ReliableQueueInterface
+   *   The queue to use.
+   */
+  protected function getQueue() : ReliableQueueInterface {
+    return $this->queueFactory->get('islandora_drush_utils__sec873', TRUE);
+  }
+
+  /**
+   * Given CSV, populate queue.
+   *
+   * @param array $options
+   *   Options, see attributes for details.
+   */
+  #[CLI\Command(name: 'islandora_drush_utils:sec-873:repair:enqueue')]
+  #[CLI\Help(description: 'Given CSV to process representing paragraphs which are referenced across different entities, populate queue to be processed.')]
+  #[CLI\Option(name: 'batch-size', description: 'The number of items which are processed per batch.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:repair:enqueue --user=1 < current.csv', description: 'Consume from pre-run CSV.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-current | drush islandora_drush_utils:sec-873:repair:enqueue --user=1', description: 'Consume CSV from pipe.')]
+  #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
+  #[CLI\ValidateModulesEnabled(modules: ['paragraphs'])]
+  public function enqueue(
+    array $options = [
+      'batch-size' => 100,
+    ],
+  ) : void {
+    $queue = $this->getQueue();
+
+    // Wipe all items/recreate queue.
+    $queue->deleteQueue();
+    $queue->createQueue();
+
     while ($row = fgetcsv(STDIN)) {
       [$entity_type, $field_name, $paragraph_id, , $_id_csv] = $row;
       $ids = explode(',', $_id_csv);
 
-      $transaction = $this->database->startTransaction();
-      try {
-        /** @var \Drupal\Core\Entity\ContentEntityInterface[] $entities */
-        $entities = $this->entityTypeManager->getStorage($entity_type)->loadMultiple($ids);
-        foreach ($entities as $entity) {
-          $this->logger->debug('Processing {entity_type}:{entity_id}:{field_name}:{paragraph_id}', [
-            'entity_type' => $entity->getEntityTypeId(),
-            'entity_id' => $entity->id(),
-            'field_name' => $field_name,
-            'paragraph_id' => $paragraph_id,
-          ]);
-          /** @var \Drupal\entity_reference_revisions\EntityReferenceRevisionsFieldItemList $paragraph_list */
-          $paragraph_list = $entity->get($field_name);
-
-          $to_replace = NULL;
-          $to_delete = [];
-          /** @var \Drupal\entity_reference_revisions\Plugin\Field\FieldType\EntityReferenceRevisionsItem $item */
-          foreach ($paragraph_list as $index => $item) {
-            if ($item->get('target_id')->getValue() !== $paragraph_id) {
-              continue;
-            }
-            if ($to_replace === NULL) {
-              $to_replace = $index;
-              $this->logger->debug('Replacing {entity_type}:{entity_id}:{field_name}:target_id {paragraph_id} @ delta {delta}', [
-                'entity_type' => $entity->getEntityTypeId(),
-                'entity_id' => $entity->id(),
-                'field_name' => $field_name,
-                'paragraph_id' => $paragraph_id,
-                'delta' => $index,
-              ]);
-            }
-            else {
-              // XXX: Unlikely to encounter, but _if_ there were somehow
-              // multiple references to the same paragraph in a given field,
-              // this would handle de-duping them (which is to say, deleting the
-              // extra references).
-              $to_delete[] = $index;
-              $this->logger->debug('Deleting {entity_type}:{entity_id}:{field_name}:target_id {paragraph_id} @ delta {delta}', [
-                'entity_type' => $entity->getEntityTypeId(),
-                'entity_id' => $entity->id(),
-                'field_name' => $field_name,
-                'paragraph_id' => $paragraph_id,
-                'delta' => $index,
-              ]);
-            }
-          }
-
-          $info = $paragraph_list->get($to_replace)->getValue();
-          /** @var \Drupal\paragraphs\Entity\Paragraph $item */
-          $item = $paragraph_storage->loadRevision($info['target_revision_id']);
-          /** @var \Drupal\paragraphs\Entity\Paragraph $dupe */
-          $dupe = $item->createDuplicate();
-          $dupe->setParentEntity($entity, $field_name);
-          $paragraph_list->set($to_replace, $dupe);
-
-          // XXX: Need to unset from end to start, as the list will rekey itself
-          // automatically.
-          foreach (array_reverse($to_delete) as $index_to_delete) {
-            unset($paragraph_list[$index_to_delete]);
-          }
-
-          $entity->setNewRevision();
-          if ($entity instanceof RevisionLogInterface) {
-            if ($this->currentUser) {
-              $entity->setRevisionUser($this->getCurrentUser());
-            }
-            $entity->setRevisionLogMessage("Reworked away from the shared cross-entity paragraph entity {$paragraph_id}.");
-          }
-          if (!$options['dry-run']) {
-            $entity->save();
-            $this->logger->info('Updated {entity_id} away from {paragraph_id}.', [
-              'entity_id' => $entity->id(),
-              'paragraph_id' => $paragraph_id,
-            ]);
-          }
-          else {
-            $this->logger->info('Would update {entity_id} away from {paragraph_id}.', [
-              'entity_id' => $entity->id(),
-              'paragraph_id' => $paragraph_id,
-            ]);
-          }
-        }
-      }
-      catch (\Exception $e) {
-        $transaction->rollBack();
-        throw new \Exception("Encountered exception, rolled back transaction.", previous: $e);
-      }
-      if ($options['dry-run']) {
-        $transaction->rollBack();
-        $this->logger->debug('Dry run, rolling back paragraphs.');
+      foreach (array_chunk($ids, $options['batch-size']) as $chunk) {
+        $queue->createItem([
+          'entity_type' => $entity_type,
+          'field_name' => $field_name,
+          'paragraph_id' => $paragraph_id,
+          'ids' => $chunk,
+          'uid' => $this->currentUser->id(),
+        ]);
       }
     }
   }
 
   /**
-   * Load actual entity of the current user.
+   * Given populated queue, process it.
    *
-   * @return \Drupal\user\UserInterface
-   *   User entity for the current user.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @param array $options
+   *   Options, see attributes for details.
    */
-  protected function getCurrentUser() : UserInterface {
-    return $this->currentUserAsUser ??= $this->entityTypeManager->getStorage('user')->load($this->currentUser->id());
+  #[CLI\Command(name: 'islandora_drush_utils:sec-873:repair:batch')]
+  #[CLI\Help(description: 'Given populated queue, batch process it.')]
+  #[CLI\Option(name: 'dry-run', description: 'Flag to avoid making changes. NOTE: The queue will still be consumed.')]
+  #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:repair:batch', description: 'Process the queue.')]
+  #[CLI\ValidateModulesEnabled(modules: ['paragraphs'])]
+  public function processQueue(
+    array $options = [
+      'dry-run' => self::OPT,
+    ],
+  ) : void {
+    $process = Drush::drush(
+      Drush::aliasManager()->getSelf(),
+      'islandora_drush_utils:queue:run',
+      ['islandora_drush_utils__sec873'],
+      $this->getVerbosityOptions(),
+    );
+    $process->setTimeout(NULL);
+    $process->run(
+      static::directOutputCallback(...),
+      env: [
+        'ISLANDORA_DRUSH_UTILS_SEC_783__DRY_RUN' => $options['dry-run'],
+      ],
+    );
+    if (!$process->isSuccessful()) {
+      throw new \Exception('Subprocess failed');
+    }
   }
 
 }
