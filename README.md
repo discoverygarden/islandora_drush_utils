@@ -105,7 +105,7 @@ The process here creates new paragraph entities where it is detected that a para
 There are a few related commands:
 
 - `islandora_drush_utils:sec-873:get-current`: Dumps CSV to stdout which can be consumed by the `:repair` and/or `:repair:enqueue` commands, identifying what paragraphs are referenced across which entities in current/default revisions.
-- `islandora_drush_utils:sec-873:get-revisions`: Similar to `:get-current`, dumps similar CSV to stdout across ALL revisions. Intended more for informative purposes rather than for processing.
+- `islandora_drush_utils:sec-873:get-revisions`: Similar to `:get-current`, dumps similar CSV to stdout across ALL revisions, including the revision ID alongside entity IDs. Intended more for informative purposes.
 - `islandora_drush_utils:sec-873:repair`: Wraps the `[...]:enqueue` and `[...]:batch` commands together, for convenience.
 - `islandora_drush_utils:sec-873:repair:enqueue`: Consume CSV to populate queue to be processed.
 - `islandora_drush_utils:sec-873:repair:batch`: Process the populated queue.

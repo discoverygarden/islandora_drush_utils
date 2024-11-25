@@ -176,10 +176,8 @@ class Sec873DrushCommands extends DrushCommands {
       ->groupBy("t.{$target_field}")
       ->having('count(*) > 1');
 
-    $ids_alias = $query->addExpression("STRING_AGG(t.entity_id::varchar, ',')", "entity_ids");
     $id_count_alias = $query->addExpression("COUNT(*)", 'id_count');
 
-    $query->addMetaData(static::IDS_META, $ids_alias);
     $query->addMetaData(static::COUNT_META, $id_count_alias);
 
     return $query;
@@ -204,7 +202,7 @@ class Sec873DrushCommands extends DrushCommands {
     foreach ($this->getTargetTables() as $info) {
       $target_field = "{$info['field_name']}_target_id";
       $query = $this->getQuery($info['table_name'], $target_field);
-      $ids_alias = $query->getMetaData(static::IDS_META);
+      $ids_alias = $query->addExpression("STRING_AGG(t.entity_id::varchar, ',')", "entity_ids");
       $id_count_alias = $query->getMetaData(static::COUNT_META);
       $results = $query->execute();
       foreach ($results as $result) {
@@ -234,7 +232,7 @@ class Sec873DrushCommands extends DrushCommands {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   #[CLI\Command(name: 'islandora_drush_utils:sec-873:get-revisions')]
-  #[CLI\Help(description: 'Identify all revisions referencing the same entities. This is intended to be more informative than actionable.')]
+  #[CLI\Help(description: 'Identify all revisions referencing the same entities. This is intended to be informative.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-revisions', description: 'Base execution, logging and dumping CSV to stdout.')]
   #[CLI\Usage(name: 'drush -vvv islandora_drush_utils:sec-873:get-revisions', description: 'Base execution with ALL the debug output.')]
   #[CLI\Usage(name: 'drush islandora_drush_utils:sec-873:get-revisions > revisions.csv', description: 'Base execution, logging to stderr and dumping CSV to current.csv via stdout.')]
@@ -249,7 +247,7 @@ class Sec873DrushCommands extends DrushCommands {
       $existence_query->where("[t].{$target_field} = [tt].{$target_field} AND [t].entity_id != [tt].entity_id");
       $query->exists($existence_query);
 
-      $ids_alias = $query->getMetaData(static::IDS_META);
+      $ids_alias = $query->addExpression("STRING_AGG(t.entity_id::text || ':'::text || t.revision_id::text, ',')", "entity_ids");
       $id_count_alias = $query->getMetaData(static::COUNT_META);
       $results = $query->execute();
       foreach ($results as $result) {
