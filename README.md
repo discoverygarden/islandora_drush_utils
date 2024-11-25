@@ -94,9 +94,13 @@ where `{queue_id}` is the ID/name of one of the queues as might be returned from
 
 ### SEC-873 Remedy
 
-SEC-873 is an internal issue dealing with repercussions of https://www.drupal.org/project/views_bulk_edit/issues/3084329
+SEC-873 is an internal issue dealing with repercussions of https://www.drupal.org/project/views_bulk_edit/issues/3084329 .
 
 With this issue, replacing or adding paragraphs values to paragraph fields using Views Bulk Operations "modify fields" operation could lead to the same paragraph entity/ID being unexpectedly used across multiple parent entities. This can then lead to issues attempting to individually edit any of these entities, such as values from different paragraph revisions leaking to other entities referencing the same paragraph ID.
+
+At the moment, this d.o issue is still open; however, there are patches on it which appear to work (though there may be other issues if combining with allowing the creation of new taxonomy terms inside of the paragraph; however, such should be able to be worked-around by creating such terms first, separately).
+
+The process here creates new paragraph entities where it is detected that a paragraph is being shared across multiple parent entities, such that future edits the particular items should work as expected.
 
 There are a few related commands:
 
