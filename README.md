@@ -74,6 +74,38 @@ drush islandora_drush_utils:null-child-weight-updater --verbose
 
 This command identifies and updates nodes that have a mix of null and integer values in field_weight.
 
+### Queue runner
+
+We have taken to use `queue:run` more; however, it does not natively have protections like running batches do, to occasionally re-fork to reduce memory usage due to Drupal's use of static caching.
+
+This command allows the specification of some options with which to run a queue to completion:
+- `--time-per-iteration`: The amount of time we will request `queue:run` to run, in seconds. Defaults to 300.
+- `--items-per-iteration`: The number of items to request `queue:run` to process. Defaults to 100.
+
+Otherwise, this is intended to be just be a slightly safer (in terms of memory usage) alternative to `queue:run`.
+
+This command is just `islandora_drush_utils:queue:run`, and might be invoked with something like:
+
+```bash
+drush islandora_drush_utils:queue:run {queue_id}
+```
+
+where `{queue_id}` is the ID/name of one of the queues as might be returned from `queue:list` (or otherwise defined as the ID of a `@QueueWorker` plugin).
+
+### SEC-873 Remedy
+
+SEC-873 is an internal issue dealing with repercussions of https://www.drupal.org/project/views_bulk_edit/issues/3084329
+
+With this issue, replacing or adding paragraphs values to paragraph fields using Views Bulk Operations "modify fields" operation could lead to the same paragraph entity/ID being unexpectedly used across multiple parent entities. This can then lead to issues attempting to individually edit any of these entities, such as values from different paragraph revisions leaking to other entities referencing the same paragraph ID.
+
+There are a few related commands:
+
+- `islandora_drush_utils:sec-873:get-current`: Dumps CSV to stdout which can be consumed by the `:repair` and/or `:repair:enqueue` commands, identifying what paragraphs are referenced across which entities in current/default revisions.
+- `islandora_drush_utils:sec-873:get-revisions`: Similar to `:get-current`, dumps similar CSV to stdout across ALL revisions. Intended more for informative purposes rather than for processing.
+- `islandora_drush_utils:sec-873:repair`: Wraps the `[...]:enqueue` and `[...]:batch` commands together, for convenience.
+- `islandora_drush_utils:sec-873:repair:enqueue`: Consume CSV to populate queue to be processed.
+- `islandora_drush_utils:sec-873:repair:batch`: Process the populated queue.
+
 ### User wrapper
 
 ```bash
