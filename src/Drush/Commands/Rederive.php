@@ -52,9 +52,11 @@ class Rederive extends DrushCommands implements ContainerInjectionInterface {
    *
    * @islandora-drush-utils-user-wrap
    */
-  public function rederive(array $options = [
-    'source_uri' => 'http://pcdm.org/use#OriginalFile',
-  ]) : void {
+  public function rederive(
+    array $options = [
+      'source_uri' => 'http://pcdm.org/use#OriginalFile',
+    ],
+  ) : void {
     $original_file_taxonomy_ids = $this->entityTypeManager->getStorage('taxonomy_term')
       ->getQuery()
       ->condition('field_external_uri', $options['source_uri'])

@@ -11,3 +11,6 @@ services:
       - '@logger.islandora_drush_utils'
     tags:
       - { name: drush.command }
+  logger.islandora_drush_utils.sec_873:
+    parent: logger.channel_base
+    arguments: [ 'islandora_drush_utils.sec_873' ]

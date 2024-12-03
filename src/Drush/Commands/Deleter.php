@@ -76,11 +76,11 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
    * Constructor.
    */
   public function __construct(
-        protected EntityTypeManagerInterface $entityTypeManager,
-        protected QueueFactory $queueFactory,
-        protected Connection $database,
-        protected EntityFieldManagerInterface $entityFieldManager
-    ) {
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected QueueFactory $queueFactory,
+    protected Connection $database,
+    protected EntityFieldManagerInterface $entityFieldManager,
+  ) {
     parent::__construct();
 
     $this->queuePrefix = implode(
@@ -169,10 +169,13 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
    *   themselves.
    * @islandora-drush-utils-user-wrap
    */
-  public function deleteRecursively(string $ids, array $options = [
-    'empty' => FALSE,
-    'dry-run' => FALSE,
-  ]): void {
+  public function deleteRecursively(
+    string $ids,
+    array $options = [
+      'empty' => FALSE,
+      'dry-run' => FALSE,
+    ],
+  ): void {
     $this->options = $options;
     foreach (explode(',', $ids) as $id) {
       $this->enqueueTraversal(
@@ -531,10 +534,10 @@ class Deleter extends DrushCommands implements ContainerInjectionInterface {
    *   Additional replacements to be applied to the $template string.
    */
   protected function deleteTranslations(
-        TranslatableInterface $entity,
-        string $template = 'Deleting {lang} translation of {entity_type} {id}.',
-        array $replacements = []
-    ): void {
+    TranslatableInterface $entity,
+    string $template = 'Deleting {lang} translation of {entity_type} {id}.',
+    array $replacements = [],
+  ): void {
     foreach (array_keys($entity->getTranslationLanguages(FALSE)) as $langcode) {
       $this->log(
             $template, $replacements + [

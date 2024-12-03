@@ -65,10 +65,13 @@ class PublishUnpublishCollections extends DrushCommands {
    * @command islandora_drush_utils:update-status
    * @aliases idr:us
    */
-  public function updateStatus(string $ancestor_nids, array $options = [
-    'publish' => FALSE,
-    'batchSize' => 100,
-  ]) {
+  public function updateStatus(
+    string $ancestor_nids,
+    array $options = [
+      'publish' => FALSE,
+      'batchSize' => 100,
+    ],
+  ) {
     $ancestor_nids = explode(',', $ancestor_nids);
 
     $batch = [

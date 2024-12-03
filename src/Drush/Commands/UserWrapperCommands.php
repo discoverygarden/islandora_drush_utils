@@ -58,6 +58,17 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
   }
 
   /**
+   * Command validation callback; if `--user` is supported, is it provided?
+   *
+   * @hook validate @islandora-drush-utils-user-wrap
+   */
+  public function userCheck(CommandData $commandData) {
+    if (!$commandData->input()->getOption('user')) {
+      $this->logger->info('Command supports "--user"; however, it was not passed to the command.');
+    }
+  }
+
+  /**
    * Add the option to the command.
    *
    * @hook option @islandora-drush-utils-user-wrap
