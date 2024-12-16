@@ -41,7 +41,7 @@ class RebuildOaiEntries extends DrushCommands {
    * @aliases idr:roai
    */
   public function rebuild() {
-    rest_oai_pmh_cache_views();
+    rest_oai_pmh_cache_views(FALSE, 'rest_oai_pmh_views_cache_cron', TRUE);
 
     $batch = [
       'title' => $this->t('Processing OAI rebuild'),
