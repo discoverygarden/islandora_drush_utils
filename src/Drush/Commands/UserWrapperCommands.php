@@ -9,10 +9,13 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
+use Drush\Commands\AutowireTrait;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -23,9 +26,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * "@islandora_drush_utils-user-wrap" annotation to use it where we want
  * to.
  */
-class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInterface {
+class UserWrapperCommands implements ContainerInjectionInterface {
 
-  use LoggerAwareTrait;
+  use AutowireTrait;
 
   /**
    * The user to which we will switch.
@@ -42,6 +45,8 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
   public function __construct(
     protected AccountSwitcherInterface $switcher,
     protected EntityTypeManagerInterface $entityTypeManager,
+    #[Autowire(service: 'logger.islandora_drush_utils')]
+    protected LoggerInterface $logger,
     protected $debug = FALSE,
   ) {
   }
@@ -53,6 +58,7 @@ class UserWrapperCommands implements LoggerAwareInterface, ContainerInjectionInt
     return new static(
       $container->get('account_switcher'),
       $container->get('entity_type.manager'),
+      $container->get('@logger.islandora_drush_utils'),
       FALSE,
     );
   }
