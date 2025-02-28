@@ -8,7 +8,7 @@
 /**
  * Implements hook_batch_alter().
  */
-function islandora_drush_utils_batch_alter(&$batch) {
+function islandora_drush_utils_batch_alter(array &$batch) : void {
   // Better preservation messsaging.
   foreach ($batch['sets'] as &$set) {
     if (!isset($set['operations'])) {
@@ -59,24 +59,24 @@ function islandora_drush_utils_batch_alter(&$batch) {
     if (is_string($callable)) {
       return trim($callable);
     }
-    elseif (is_array($callable)) {
+
+    if (is_array($callable)) {
       if (is_object($callable[0])) {
         return sprintf("(%s instance)::%s", get_class($callable[0]),
           trim($callable[1]));
       }
-      else {
-        return sprintf("%s::%s", trim($callable[0]), trim($callable[1]));
-      }
+
+      return sprintf("%s::%s", trim($callable[0]), trim($callable[1]));
     }
-    elseif ($callable instanceof Closure) {
+
+    if ($callable instanceof Closure) {
       return 'closure';
     }
-    else {
-      return 'unknown';
-    }
+
+    return 'unknown';
   };
 
-  $wrap_op = function ($op) use ($user, $logger, $namer) {
+  $wrap_op = static function ($op) use ($user, $logger, $namer) {
     $func = reset($op);
     if ($func !== '_islandora_drush_utils_user_wrapped_batch_op') {
       $logger->debug('Wrapping @func with @wrapper to maintain the user (@uid).',
@@ -93,9 +93,8 @@ function islandora_drush_utils_batch_alter(&$batch) {
         ],
       ];
     }
-    else {
-      return $op;
-    }
+
+    return $op;
   };
 
   foreach ($batch['sets'] as &$set) {
@@ -108,7 +107,7 @@ function islandora_drush_utils_batch_alter(&$batch) {
 /**
  * Wrap batch op with user.
  */
-function _islandora_drush_utils_user_wrapped_batch_op($id, $info, &$context) {
+function _islandora_drush_utils_user_wrapped_batch_op(int|string $id, array $info, array &$context) {
   $switcher = \Drupal::service('account_switcher');
   try {
     $user = \Drupal::service('entity_type.manager')

@@ -1,0 +1,6 @@
+---
+# XXX: Command files are expected to make use of newer methods of instantiation,
+# such as:
+# - create() method as of Drush 11.6; or,
+# - autowiring as of Drush 12.5
+services: {}

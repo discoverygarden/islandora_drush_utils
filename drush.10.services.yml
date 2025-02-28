@@ -28,6 +28,7 @@ services:
     arguments:
       - '@account_switcher'
       - '@entity_type.manager'
+      - '@logger.islandora_drush_utils'
     tags:
       - name: drush.command
   islandora_drush_utils.command.user_wrapping_alterer:
