@@ -56,7 +56,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
     return new static(
       $container->get('account_switcher'),
       $container->get('entity_type.manager'),
-      $container->get('@logger.islandora_drush_utils'),
+      $container->get('logger.islandora_drush_utils'),
       FALSE,
     );
   }
