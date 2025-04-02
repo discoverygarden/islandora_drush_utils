@@ -59,3 +59,10 @@ services:
       - '@queue'
     tags:
       - name: drush.command
+  islandora_drush_utils.display_hint_updater:
+    class: \Drupal\islandora_drush_utils\Drush\Commands\UpdateDisplayHints
+    arguments:
+      - '@entity_type.manager'
+      - '@messenger'
+    tags:
+      - name: drush.command
