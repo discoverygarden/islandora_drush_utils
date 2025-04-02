@@ -57,7 +57,7 @@ class UpdateDisplayHints extends DrushCommands {
       ->execute();
 
     if (empty($terms)) {
-      $this->messenger->addError(t('No terms found with URIs: @uris', [
+      $this->messenger->addError($this->t('No terms found with URIs: @uris', [
         '@uris' => implode(', ', $uris),
       ]));
       return;
