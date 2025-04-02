@@ -20,6 +20,8 @@ class UpdateDisplayHints extends DrushCommands {
   use DependencySerializationTrait;
 
   public const CHUNK_SIZE = 100;
+  public const MODEL_URI = 'https://schema.org/Book';
+  public const DISPLAY_HINT_URI = 'https://projectmirador.org';
 
   /**
    * Construct.
@@ -40,7 +42,7 @@ class UpdateDisplayHints extends DrushCommands {
   #[CLI\Option(name: 'term-uris', description: 'Comma separated list of Islandora Model term URIs to target.')]
   public function displayHintFeeder(
     array $options = [
-      'term-uris' => 'https://schema.org/Book',
+      'term-uris' => self::MODEL_URI,
     ],
   ) : void {
     $uris = array_map('trim', explode(',', $options['term-uris']));
@@ -84,7 +86,7 @@ class UpdateDisplayHints extends DrushCommands {
   public function updateDisplayHints(
     string $nids,
     array $options = [
-      'term-uri' => 'https://projectmirador.org',
+      'term-uri' => self::DISPLAY_HINT_URI,
     ],
   ) : void {
     $termStorage = $this->entityTypeManager->getStorage('taxonomy_term');
