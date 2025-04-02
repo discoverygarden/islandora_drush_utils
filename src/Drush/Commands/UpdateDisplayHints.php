@@ -146,8 +146,8 @@ class UpdateDisplayHints extends DrushCommands {
       '@nodeCount' => $context['sandbox']['max'],
     ]);
 
-    foreach ($chunk as $node) {
-      $node = $this->entityTypeManager->getStorage('node')->load($node);
+    $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($chunk);
+    foreach ($nodes as $node) {
       $node->set('field_display_hints', $termId);
       $node->save();
       $context['results']['updated']++;
