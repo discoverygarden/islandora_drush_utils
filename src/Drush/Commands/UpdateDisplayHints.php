@@ -7,6 +7,7 @@ use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -18,6 +19,7 @@ class UpdateDisplayHints extends DrushCommands {
 
   use AutowireTrait;
   use DependencySerializationTrait;
+  use StringTranslationTrait;
 
   public const CHUNK_SIZE = 100;
   public const MODEL_URI = 'https://schema.org/Book';
@@ -70,7 +72,7 @@ class UpdateDisplayHints extends DrushCommands {
       ->execute();
 
     if (empty($nids)) {
-      $this->messenger->addError(t('No applicable nodes found.'));
+      $this->messenger->addError($this->t('No applicable nodes found.'));
       return;
     }
 
@@ -97,7 +99,7 @@ class UpdateDisplayHints extends DrushCommands {
       ->execute();
 
     if (empty($terms)) {
-      $this->messenger->addError(t('No terms found with URI: @uri', [
+      $this->messenger->addError($this->t('No terms found with URI: @uri', [
         '@uri' => reset($options['term-uri']),
       ]));
       return;
@@ -114,7 +116,7 @@ class UpdateDisplayHints extends DrushCommands {
 
     $chunks = array_chunk($nodeIds, self::CHUNK_SIZE);
     foreach ($chunks as $batchId => $chunk) {
-      $this->messenger->addMessage(t('Queuing batch @batchId', ['@batchId' => $batchId]));
+      $this->messenger->addMessage($this->t('Queuing batch @batchId', ['@batchId' => $batchId]));
       $batch->addOperation([$this, 'processBatch'], [$chunk, $termId, $batchId, count($nodeIds)]);
     }
 
@@ -122,6 +124,9 @@ class UpdateDisplayHints extends DrushCommands {
     drush_op('drush_backend_batch_process');
   }
 
+  /**
+   * Process a batch of nodes to update display hints.
+   */
   public function processBatch(array $chunk, int $termId, int $batchId, int $nodeCount, array &$context): void {
     if (!isset($context['sandbox']['progress'])) {
       $context['sandbox']['progress'] = 0;
@@ -135,7 +140,7 @@ class UpdateDisplayHints extends DrushCommands {
 
     $context['results']['progress'] += count($chunk);
 
-    $context['message'] = t('Processing batch @batchId. Progress: @progress of @nodeCount.', [
+    $context['message'] = $this->t('Processing batch @batchId. Progress: @progress of @nodeCount.', [
       '@batchId' => $batchId,
       '@progress' => $context['results']['progress'],
       '@nodeCount' => $context['sandbox']['max'],
@@ -149,16 +154,20 @@ class UpdateDisplayHints extends DrushCommands {
     }
   }
 
+  /**
+   * Finished batch callback.
+   */
   public function batchFinished(bool $success, array $results, array $operations, string $elapsed): void {
     if ($success) {
-      $this->messenger->addMessage(t('Updated display hints for @count objects. Time: @elapsed', [
+      $this->messenger->addMessage($this->t('Updated display hints for @count objects. Time: @elapsed', [
         '@count' => $results['updated'],
         '@elapsed' => $elapsed,
       ]));
-    } else {
+    }
+    else {
       $error_operation = reset($operations);
       if ($error_operation) {
-        $this->messenger->addError(t('An error occurred while processing @operation.', [
+        $this->messenger->addError($this->t('An error occurred while processing @operation.', [
           '@operation' => $error_operation[0],
         ]));
       }
