@@ -2,7 +2,7 @@
 
 namespace Drupal\islandora_drush_utils\Drush\Commands;
 
-use Drupal\Core\Batch\BatchBuilder;
+use Consolidation\AnnotatedCommand\Attributes\HookSelector;
 use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -21,7 +21,6 @@ class UpdateDisplayHints extends DrushCommands {
   use DependencySerializationTrait;
   use StringTranslationTrait;
 
-  public const CHUNK_SIZE = 100;
   public const MODEL_URI = 'https://schema.org/Book';
   public const DISPLAY_HINT_URI = 'https://projectmirador.org';
 
@@ -42,6 +41,7 @@ class UpdateDisplayHints extends DrushCommands {
    */
   #[CLI\Command(name: 'islandora_drush_utils:display-hint-feeder')]
   #[CLI\Option(name: 'term-uris', description: 'Comma separated list of Islandora Model term URIs to target.')]
+  #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
   public function displayHintFeeder(
     array $options = [
       'term-uris' => self::MODEL_URI,
@@ -76,19 +76,20 @@ class UpdateDisplayHints extends DrushCommands {
       return;
     }
 
-    $this->output()->writeln(implode(',', $nids));
+    $this->output()->writeln(implode("\n", $nids));
   }
 
   /**
-   * Feeder command to grab NIDs of items to update.
+   * Updates nodes with display hints, consumes from STDIN.
    */
   #[CLI\Command(name: 'islandora_drush_utils:update-display-hints')]
-  #[CLI\Argument(name: 'nids', description: 'Comma separated list of NIDs to update.')]
   #[CLI\Option(name: 'term-uri', description: 'Islandora Display term URI to update field_display_hints to.')]
+  #[CLI\Option(name: 'dry-run', description: 'Flag to avoid making changes.')]
+  #[HookSelector(name: 'islandora-drush-utils-user-wrap')]
   public function updateDisplayHints(
-    string $nids,
     array $options = [
       'term-uri' => self::DISPLAY_HINT_URI,
+      'dry-run' => self::OPT,
     ],
   ) : void {
     $termStorage = $this->entityTypeManager->getStorage('taxonomy_term');
@@ -100,79 +101,29 @@ class UpdateDisplayHints extends DrushCommands {
 
     if (empty($terms)) {
       $this->messenger->addError($this->t('No terms found with URI: @uri', [
-        '@uri' => reset($options['term-uri']),
+        '@uri' => $options['term-uri'],
       ]));
       return;
     }
 
     $termId = reset($terms);
-    $nodeIds = array_map('trim', explode(',', $nids));
+    $nodeIds = [];
 
-    $batch = new BatchBuilder();
-    $batch->setTitle('Updating display hints.')
-      ->setFinishCallback([$this, 'batchFinished'])
-      ->setInitMessage('Beginning update of field_display_hints.')
-      ->setErrorMessage('An error occurred during update of field_display_hints.');
-
-    $chunks = array_chunk($nodeIds, self::CHUNK_SIZE);
-    foreach ($chunks as $batchId => $chunk) {
-      $this->messenger->addMessage($this->t('Queuing batch @batchId', ['@batchId' => $batchId]));
-      $batch->addOperation([$this, 'processBatch'], [$chunk, $termId, $batchId, count($nodeIds)]);
+    while ($row = fgetcsv(STDIN)) {
+      [$node_id] = $row;
+      $nodeIds[] = $node_id;
     }
 
-    drush_op('batch_set', $batch->toArray());
-    drush_op('drush_backend_batch_process');
-  }
-
-  /**
-   * Process a batch of nodes to update display hints.
-   */
-  public function processBatch(array $chunk, int $termId, int $batchId, int $nodeCount, array &$context): void {
-    if (!isset($context['sandbox']['progress'])) {
-      $context['sandbox']['progress'] = 0;
-      $context['sandbox']['max'] = $nodeCount;
-    }
-
-    if (!isset($context['sandbox']['updated'])) {
-      $context['results']['updated'] = 0;
-      $context['results']['progress'] = 0;
-    }
-
-    $context['results']['progress'] += count($chunk);
-
-    $context['message'] = $this->t('Processing batch @batchId. Progress: @progress of @nodeCount.', [
-      '@batchId' => $batchId,
-      '@progress' => $context['results']['progress'],
-      '@nodeCount' => $context['sandbox']['max'],
-    ]);
-
-    $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($chunk);
+    $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple(array_filter(array_map('trim', $nodeIds)));
     foreach ($nodes as $node) {
-      $node->set('field_display_hints', $termId);
-      $node->save();
-      $context['results']['updated']++;
-    }
-  }
-
-  /**
-   * Finished batch callback.
-   */
-  public function batchFinished(bool $success, array $results, array $operations, string $elapsed): void {
-    if ($success) {
-      $this->messenger->addMessage($this->t('Updated display hints for @count objects. Time: @elapsed', [
-        '@count' => $results['updated'],
-        '@elapsed' => $elapsed,
+      $this->messenger->addMessage($this->t('Updated display hints for @nid.', [
+        '@nid' => $node->id(),
       ]));
-    }
-    else {
-      $error_operation = reset($operations);
-      if ($error_operation) {
-        $this->messenger->addError($this->t('An error occurred while processing @operation.', [
-          '@operation' => $error_operation[0],
-        ]));
+      if (!$options['dry-run']) {
+        $node->set('field_display_hints', $termId);
+        $node->save();
       }
     }
-
   }
 
 }

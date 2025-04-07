@@ -118,6 +118,33 @@ There are a few related commands:
 
 Before Drush 9, there was a "--user" option that could be used to run commands as other users. Here, a new  "@islandora_drush_utils-user-wrap" annotation is provided, which can be used to allow the --user option in commands.
 
+### Display hint updater
+
+When rolling out additional viewers, depending on how the front end is
+configured, it may be necessary to update the display hints for nodes.
+
+The provided Drush commands will:
+1. `islandora_drush_utils:display-hint-feeder` - Returns all nodes with any
+specified taxonomy term URI(s) representing model(s) to update within
+`field_model`. Defaults to `https://schema.org/Book`.
+2. `islandora_drush_utils:update-display-hints` - Update all nodes passed with a
+specified taxonomy term URI in a replacement scenario. Defaults to
+`https://projectmirador.org`.
+
+To invoke the updater command:
+```bash
+drush islandora_drush_utils:display-hint-feeder --user=1 --term-uris='https://schema.org/Book' > nodes.csv
+drush islandora_drush_utils:update-display-hints --user=1 --term-uri='https://projectmirador.org' < nodes.csv
+```
+
+An alternative, more optimal approach would be to use GNU Parallel with
+two processes each processing 100 items at a time:
+
+```bash
+drush islandora_drush_utils:display-hint-feeder --user=1 --term-uris='https://schema.org/Book' | parallel --pipe --max-args 100 -j2 drush islandora_drush_utils:update-display-hints --user=1 --term-uri='https://projectmirador.org'
+```
+
+
 ## Troubleshooting/Issues
 
 Having problems or solved a problem? Contact [discoverygarden](http://support.discoverygarden.ca).
