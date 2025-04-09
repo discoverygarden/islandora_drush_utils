@@ -116,20 +116,19 @@ class UpdateDisplayHints extends DrushCommands {
 
     $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple(array_filter(array_map('trim', $nodeIds)));
     foreach ($nodes as $node) {
-  foreach ($nodes as $node) {
-    if (!$options['dry-run']) {
-      $node->set('field_display_hints', $termId);
-      $node->save();
-      $this->messenger->addMessage($this->t('Updated display hints for @nid.', [
-        '@nid' => $node->id(),
-      ]));
+      if (!$options['dry-run']) {
+        $node->set('field_display_hints', $termId);
+        $node->save();
+        $this->messenger->addMessage($this->t('Updated display hints for @nid.', [
+          '@nid' => $node->id(),
+        ]));
+      }
+      else {
+        $this->messenger->addMessage($this->t('Would update display hints for @nid (dry run).', [
+          '@nid' => $node->id(),
+        ]));
+      }
     }
-    else {
-      $this->messenger->addMessage($this->t('Would update display hints for @nid (dry run).', [
-        '@nid' => $node->id(),
-      ]));
-    }
-  }
   }
 
 }
