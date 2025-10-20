@@ -4,7 +4,11 @@ namespace Drupal\islandora_drush_utils\Drush\CommandInfoAlterers;
 
 use Consolidation\AnnotatedCommand\CommandInfoAltererInterface;
 use Consolidation\AnnotatedCommand\Parser\CommandInfo;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drush\Commands\AutowireTrait;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Re-create the global --user option.
@@ -12,7 +16,9 @@ use Psr\Log\LoggerInterface;
  * XXX: Drush 9 dropped it; however, we require this option for various
  * commands.
  */
-class UserWrappingAlterer implements CommandInfoAltererInterface {
+class UserWrappingCommandInfoAlterer implements CommandInfoAltererInterface, ContainerInjectionInterface {
+
+  use AutowireTrait;
 
   /**
    * The annotation we use to handle user swapping.
@@ -30,11 +36,18 @@ class UserWrappingAlterer implements CommandInfoAltererInterface {
   ];
 
   /**
+   * Manual toggle, for debugging alterer.
+   *
+   * @var bool
+   */
+  protected bool $debug = FALSE;
+
+  /**
    * Constructor.
    */
   public function __construct(
+    #[Autowire(service: 'logger.islandora_drush_utils')]
     protected LoggerInterface $logger,
-    protected $debug = FALSE,
   ) {
     // No-op.
   }
