@@ -30,7 +30,6 @@ class UserWrappingCommandInfoAlterer implements CommandInfoAltererInterface, Con
   const COMMANDS = [
     'content-sync:import',
     'content-sync:export',
-    'batch:process',
     'migrate:rollback',
   ];
 
