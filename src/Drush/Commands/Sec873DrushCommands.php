@@ -64,7 +64,7 @@ class Sec873DrushCommands extends DrushCommands {
     protected QueueFactory $queueFactory,
   ) {
     parent::__construct();
-    $this->setLogger($logger);
+    $this->logger()?->add('islandora_drush_utils.sec_873', $logger);
   }
 
   /**

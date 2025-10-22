@@ -48,7 +48,7 @@ class PublishUnpublishCollections extends DrushCommands {
   public function __construct(EntityTypeManagerInterface $entity_type_manager, IslandoraUtils $islandora_utils, LoggerInterface $logger) {
     $this->storage = $entity_type_manager;
     $this->utils = $islandora_utils;
-    $this->logger = $logger;
+    $this->logger()?->add('islandora_drush_utils', $logger);
   }
 
   /**
