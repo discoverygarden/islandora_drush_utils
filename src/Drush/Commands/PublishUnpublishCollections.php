@@ -97,9 +97,12 @@ class PublishUnpublishCollections extends DrushCommands {
    *   The publish status of the nodes and media.
    * @param array $ancestor_nids
    *   The array of NIDs to search for as an ancestor.
+   * @param array $context
+   *   The batch context.
    */
-  public function updateStatusBatch(int $batch_size, bool $publish, array $ancestor_nids) {
+  public function updateStatusBatch(int $batch_size, bool $publish, array $ancestor_nids, array &$context) {
     $query = $this->storage->getStorage('node')->getQuery()
+      ->accessCheck(FALSE)
       ->condition('type', 'islandora_object')
       ->exists('field_member_of');
 
@@ -151,6 +154,7 @@ class PublishUnpublishCollections extends DrushCommands {
 
           $mids = $this->storage->getStorage('media')
             ->getQuery()
+            ->accessCheck(FALSE)
             ->exists('field_media_of')
             ->condition('field_media_of', $node->id())
             ->execute();
