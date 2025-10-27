@@ -19,9 +19,9 @@ use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Deleter service, to recursively delete.
+ * DeleterDrushCommands service, to recursively delete.
  */
-class Deleter extends DrushCommands implements ContainerInjectionInterface {
+class DeleterDrushCommands extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait {
     __sleep as traitSleep;
