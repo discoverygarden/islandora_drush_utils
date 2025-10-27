@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Drush command to rederive thumbnails.
  */
-class GenerateThumbnails extends DrushCommands implements ContainerInjectionInterface {
+class GenerateThumbnailsDrushCommands extends DrushCommands implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
   use NodeIdParsingTrait;
