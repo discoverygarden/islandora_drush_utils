@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Drush command implementation.
  */
-class Rederive extends DrushCommands implements ContainerInjectionInterface {
+class RederiveDrushCommands extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
