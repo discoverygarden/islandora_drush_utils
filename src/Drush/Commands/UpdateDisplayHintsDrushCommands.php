@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Commands to update display hints en masse.
  */
-class UpdateDisplayHints extends DrushCommands {
+class UpdateDisplayHintsDrushCommands extends DrushCommands {
 
   use AutowireTrait;
   use DependencySerializationTrait;

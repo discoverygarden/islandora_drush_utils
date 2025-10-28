@@ -8,11 +8,11 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Commands\DrushCommands;
 
 /**
- * RebuildOaiEntries commands.
+ * RebuildOaiEntriesDrushCommands commands.
  *
  * These commands rebuild the OAI entries and consume them.
  */
-class RebuildOaiEntries extends DrushCommands {
+class RebuildOaiEntriesDrushCommands extends DrushCommands {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;

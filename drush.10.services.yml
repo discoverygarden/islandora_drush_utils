@@ -1,7 +1,7 @@
 ---
 services:
   islandora_drush_utils.deleter:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\Deleter
+    class: \Drupal\islandora_drush_utils\Drush\Commands\DeleterDrushCommands
     arguments:
       - '@entity_type.manager'
       - '@queue'
@@ -10,14 +10,14 @@ services:
     tags:
       - name: drush.command
   islandora_drush_utils.rederiver:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\Rederive
+    class: \Drupal\islandora_drush_utils\Drush\Commands\RederiveDrushCommands
     arguments:
       - '@islandora.utils'
       - '@entity_type.manager'
     tags:
       - name: drush.command
   islandora_drush_utils.rederive_thumbnails:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\GenerateThumbnails
+    class: \Drupal\islandora_drush_utils\Drush\Commands\GenerateThumbnailsDrushCommands
     arguments:
       - '@entity_type.manager'
       - '@database'
@@ -28,17 +28,18 @@ services:
     arguments:
       - '@account_switcher'
       - '@entity_type.manager'
+      - '@logger.islandora_drush_utils'
     tags:
       - name: drush.command
   islandora_drush_utils.command.user_wrapping_alterer:
-    class: \Drupal\islandora_drush_utils\Drush\CommandInfoAlterers\UserWrappingAlterer
+    class: \Drupal\islandora_drush_utils\Drush\CommandInfoAlterers\UserWrappingCommandInfoAlterer
     tags:
       - name: drush.command_info_alterer
     arguments:
       - '@logger.islandora_drush_utils'
       - false
   islandora_drush_utils.null_child_weight_updater:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\NullChildWeight
+    class: \Drupal\islandora_drush_utils\Drush\Commands\NullChildWeightDrushCommands
     arguments:
       - '@entity_type.manager'
       - '@database'
@@ -46,7 +47,7 @@ services:
     tags:
       - name: drush.command
   islandora_drush_utils.bulk_publish_unpublish:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\PublishUnpublishCollections
+    class: \Drupal\islandora_drush_utils\Drush\Commands\PublishUnpublishCollectionsDrushCommands
     arguments:
       - '@entity_type.manager'
       - '@islandora.utils'
@@ -54,13 +55,13 @@ services:
     tags:
       - { name: drush.command }
   islandora_drush_utils.rebuild_oai:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\RebuildOaiEntries
+    class: \Drupal\islandora_drush_utils\Drush\Commands\RebuildOaiEntriesDrushCommands
     arguments:
       - '@queue'
     tags:
       - name: drush.command
   islandora_drush_utils.display_hint_updater:
-    class: \Drupal\islandora_drush_utils\Drush\Commands\UpdateDisplayHints
+    class: \Drupal\islandora_drush_utils\Drush\Commands\UpdateDisplayHintsDrushCommands
     arguments:
       - '@entity_type.manager'
       - '@messenger'
