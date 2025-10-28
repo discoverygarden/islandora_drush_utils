@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
  * of given collection nids.
  * They do not affect the actual collection node.
  */
-class PublishUnpublishCollections extends DrushCommands {
+class PublishUnpublishCollectionsDrushCommands extends DrushCommands {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;

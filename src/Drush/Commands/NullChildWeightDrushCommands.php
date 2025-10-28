@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Drush command to identify/update nodes with a mix of values in field_weight.
  */
-class NullChildWeight extends DrushCommands implements ContainerInjectionInterface {
+class NullChildWeightDrushCommands extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
