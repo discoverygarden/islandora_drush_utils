@@ -2,17 +2,19 @@
 
 namespace Drupal\islandora_drush_utils\Drush\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Commands\DrushCommands;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * RebuildOaiEntriesDrushCommands commands.
  *
  * These commands rebuild the OAI entries and consume them.
  */
-class RebuildOaiEntriesDrushCommands extends DrushCommands {
+class RebuildOaiEntriesDrushCommands extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -31,7 +33,17 @@ class RebuildOaiEntriesDrushCommands extends DrushCommands {
    *   The queue service.
    */
   public function __construct(QueueFactory $queue) {
+    parent::__construct();
     $this->queue = $queue;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) : static {
+    return new static(
+      $container->get('queue'),
+    );
   }
 
   /**
