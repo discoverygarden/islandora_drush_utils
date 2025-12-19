@@ -115,7 +115,8 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands implements 
   public function updateStatusBatch(int $batch_size, bool $publish, array $ancestor_nids) {
     $query = $this->storage->getStorage('node')->getQuery()
       ->condition('type', 'islandora_object')
-      ->exists('field_member_of');
+      ->exists('field_member_of')
+      ->accessCheck(FALSE);
 
     $sandbox = &$context['sandbox'];
 
@@ -167,6 +168,7 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands implements 
             ->getQuery()
             ->exists('field_media_of')
             ->condition('field_media_of', $node->id())
+            ->accessCheck(FALSE)
             ->execute();
 
           $medias = $this->storage->getStorage('media')->loadMultiple($mids);
