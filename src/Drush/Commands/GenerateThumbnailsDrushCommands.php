@@ -60,7 +60,7 @@ class GenerateThumbnailsDrushCommands extends DrushCommands implements Container
    * @command islandora_drush_utils:rederive_thumbnails
    * @aliases idu:rtn,rtn
    *
-   * @islandora-drush-utils-user-wrap
+   * @islandora-drush-utils-required-user-wrap
    */
   public function rederive(
     array $options = [
