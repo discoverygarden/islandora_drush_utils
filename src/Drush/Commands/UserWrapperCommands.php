@@ -98,7 +98,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
-   * Add the option to the command.
+   * Add the option to the command, when the option is required.
    *
    * @hook option @islandora-drush-utils-required-user-wrap
    */
@@ -163,7 +163,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
-   * Ensure the required user provided is valid.
+   * Ensure the required user provided is valid, when the option is required.
    *
    * @hook validate @islandora-drush-utils-required-user-wrap
  */
@@ -186,7 +186,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
-   * Perform the swap before running the command.
+   * Perform the swap before running the command, when the option is required.
    *
    * @hook pre-command @islandora-drush-utils-required-user-wrap
    */
@@ -212,7 +212,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
-   * Swap back after running the command.
+   * Swap back after running the command, when the option is required.
    *
    * @hook post-command @islandora-drush-utils-required-user-wrap
    */
