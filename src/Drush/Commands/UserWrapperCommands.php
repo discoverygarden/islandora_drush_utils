@@ -166,7 +166,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
    * Ensure the required user provided is valid, when the option is required.
    *
    * @hook validate @islandora-drush-utils-required-user-wrap
- */
+   */
   public function requiredUserExists(CommandData $commandData) {
     return $this->userExists($commandData);
   }
