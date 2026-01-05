@@ -2,12 +2,14 @@
 
 namespace Drupal\islandora_drush_utils\Drush\Commands;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\islandora\IslandoraUtils;
 use Drush\Commands\DrushCommands;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * BulkPublishUnpublish commands.
@@ -16,7 +18,7 @@ use Psr\Log\LoggerInterface;
  * of given collection nids.
  * They do not affect the actual collection node.
  */
-class PublishUnpublishCollectionsDrushCommands extends DrushCommands {
+class PublishUnpublishCollectionsDrushCommands extends DrushCommands implements ContainerInjectionInterface {
 
   use DependencySerializationTrait;
   use StringTranslationTrait;
@@ -46,9 +48,21 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands {
    *   Logging service.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, IslandoraUtils $islandora_utils, LoggerInterface $logger) {
+    parent::__construct();
     $this->storage = $entity_type_manager;
     $this->utils = $islandora_utils;
     $this->logger = $logger;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function create(ContainerInterface $container) : static {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('islandora.utils'),
+      $container->get('logger.islandora_drush_utils'),
+    );
   }
 
   /**
@@ -101,7 +115,8 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands {
   public function updateStatusBatch(int $batch_size, bool $publish, array $ancestor_nids) {
     $query = $this->storage->getStorage('node')->getQuery()
       ->condition('type', 'islandora_object')
-      ->exists('field_member_of');
+      ->exists('field_member_of')
+      ->accessCheck(FALSE);
 
     $sandbox = &$context['sandbox'];
 
@@ -153,6 +168,7 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands {
             ->getQuery()
             ->exists('field_media_of')
             ->condition('field_media_of', $node->id())
+            ->accessCheck(FALSE)
             ->execute();
 
           $medias = $this->storage->getStorage('media')->loadMultiple($mids);
