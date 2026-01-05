@@ -127,7 +127,6 @@ class UserWrapperCommands implements ContainerInjectionInterface {
    * Ensure the user provided is valid.
    *
    * @hook validate @islandora-drush-utils-user-wrap
-   * @hook validate @islandora-drush-utils-required-user-wrap
    */
   public function userExists(CommandData $commandData) {
     $input = $commandData->input();
@@ -164,10 +163,18 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
+   * Ensure the required user provided is valid.
+   *
+   * @hook validate @islandora-drush-utils-required-user-wrap
+ */
+  public function requiredUserExists(CommandData $commandData) {
+    return $this->userExists($commandData);
+  }
+
+  /**
    * Perform the swap before running the command.
    *
    * @hook pre-command @islandora-drush-utils-user-wrap
-   * @hook pre-command @islandora-drush-utils-required-user-wrap
    */
   public function switchUser(CommandData $commandData) {
     $this->logDebug('pre-command');
@@ -179,10 +186,18 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
+   * Perform the swap before running the command.
+   *
+   * @hook pre-command @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredSwitchUser(CommandData $commandData) {
+    return $this->switchUser($commandData);
+  }
+
+  /**
    * Swap back after running the command.
    *
    * @hook post-command @islandora-drush-utils-user-wrap
-   * @hook post-command @islandora-drush-utils-required-user-wrap
    */
   public function unswitch($result, CommandData $commandData) {
     $this->logDebug('post-command');
@@ -194,6 +209,15 @@ class UserWrapperCommands implements ContainerInjectionInterface {
     }
 
     return $result;
+  }
+
+  /**
+   * Swap back after running the command.
+   *
+   * @hook post-command @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredUnswitch($result, CommandData $commandData) {
+    return $this->unswitch($result, $commandData);
   }
 
 }
