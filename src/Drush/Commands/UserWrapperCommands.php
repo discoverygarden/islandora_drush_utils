@@ -73,6 +73,17 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
+   * Command validation callback; `--user` is required, so check for it.
+   *
+   * @hook validate @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredUserCheck(CommandData $commandData) {
+    if (!$commandData->input()->getOption('user')) {
+      return new CommandError('Command requires "--user"; however, it was not passed to the command.');
+    }
+  }
+
+  /**
    * Add the option to the command.
    *
    * @hook option @islandora-drush-utils-user-wrap
@@ -83,6 +94,20 @@ class UserWrapperCommands implements ContainerInjectionInterface {
       'u',
       InputOption::VALUE_REQUIRED,
       'The Drupal user as whom to run the command.'
+    );
+  }
+
+  /**
+   * Add the option to the command, when the option is required.
+   *
+   * @hook option @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredUserOption(Command $command, AnnotationData $annotationData) {
+    $command->addOption(
+      'user',
+      'u',
+      InputOption::VALUE_REQUIRED,
+      'The Drupal user as whom to run the command. NOTE: This option is required for this command.'
     );
   }
 
@@ -115,7 +140,7 @@ class UserWrapperCommands implements ContainerInjectionInterface {
     $user_storage = $this->entityTypeManager->getStorage('user');
     if (is_numeric($user)) {
       $this->logDebug('"user" appears to be numeric; loading as-is');
-      $this->user = $user_storage->load($user);
+      $this->user = $user_storage->load($user) ?? FALSE;
     }
     else {
       $this->logDebug('"user" is non-numeric; assuming it is a name');
@@ -138,6 +163,15 @@ class UserWrapperCommands implements ContainerInjectionInterface {
   }
 
   /**
+   * Ensure the required user provided is valid, when the option is required.
+   *
+   * @hook validate @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredUserExists(CommandData $commandData) {
+    return $this->userExists($commandData);
+  }
+
+  /**
    * Perform the swap before running the command.
    *
    * @hook pre-command @islandora-drush-utils-user-wrap
@@ -149,6 +183,15 @@ class UserWrapperCommands implements ContainerInjectionInterface {
       $this->switcher->switchTo($this->user);
       $this->logDebug('switched user');
     }
+  }
+
+  /**
+   * Perform the swap before running the command, when the option is required.
+   *
+   * @hook pre-command @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredSwitchUser(CommandData $commandData) {
+    return $this->switchUser($commandData);
   }
 
   /**
@@ -166,6 +209,15 @@ class UserWrapperCommands implements ContainerInjectionInterface {
     }
 
     return $result;
+  }
+
+  /**
+   * Swap back after running the command, when the option is required.
+   *
+   * @hook post-command @islandora-drush-utils-required-user-wrap
+   */
+  public function requiredUnswitch($result, CommandData $commandData) {
+    return $this->unswitch($result, $commandData);
   }
 
 }
