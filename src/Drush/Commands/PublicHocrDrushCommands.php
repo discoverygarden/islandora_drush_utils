@@ -51,8 +51,9 @@ class PublicHocrDrushCommands extends DrushCommands {
     // hOCR's mimetype seems to be somewhat inconsistent so be greedy about the
     // charset that may be on the end.
     $query->condition('fm.filemime', 'text/vnd.hocr+html%', 'LIKE');
-    $results = $query->execute()->fetchCol();
-    $this->output()->writeln(implode("\n", $results));
+    foreach ($query->execute() as $result) {
+      fputcsv(STDOUT, [$result->fid]);
+    }
   }
 
   /**
