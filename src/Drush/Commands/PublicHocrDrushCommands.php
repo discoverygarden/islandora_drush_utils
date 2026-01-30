@@ -82,7 +82,7 @@ class PublicHocrDrushCommands extends DrushCommands {
       return;
     }
     foreach ($fids as $fid) {
-      /* @var \Drupal\file\FileInterface $file */
+      /** @var \Drupal\file\FileInterface $file */
       $file = $this->entityTypeManager->getStorage('file')->load($fid);
       if (!$file) {
         $this->logger()->error("File entity fid $fid not found, skipping.");
