@@ -154,12 +154,13 @@ provided to remediate this.
 exist within the `public://` stream wrapper that have the MIME type of
 `text/vnd.hocr+html`.
 2. `islandora_drush_utils:fix-public-hocr` - Updates all file entities passed to
-the configured scheme within the `generate_ocr` derivative action.
+the configured scheme within the `generate_hocr_from_an_image` derivative
+action.
 
 To invoke the updater command:
 ```bash
-drush islandora_drush_utils:identify-public-ocr > public_ocr.csv
-drush islandora_drush_utils:fix-public-ocr < public_ocr.csv
+drush islandora_drush_utils:identify-public-hocr > public_ocr.csv
+drush islandora_drush_utils:fix-public-hocr < public_ocr.csv
 ```
 
 An alternative, more optimal approach would be to use GNU Parallel with

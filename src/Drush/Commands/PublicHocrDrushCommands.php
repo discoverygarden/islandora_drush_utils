@@ -3,12 +3,12 @@
 namespace Drupal\islandora_drush_utils\Drush\Commands;
 
 use Drupal\Core\Database\Connection;
-use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\FileRepositoryInterface;
 use Drush\Attributes as CLI;
+use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -66,12 +66,6 @@ class PublicHocrDrushCommands extends DrushCommands {
       'dry-run' => self::OPT,
     ],
   ): void {
-    $fids = [];
-    while ($row = fgetcsv(STDIN)) {
-      [$fid] = $row;
-      $fids[] = $fid;
-    }
-    $fids = array_filter(array_map('trim', $fids));
     $action = $this->entityTypeManager->getStorage('action')->load(self::HOCR_DERIVATIVE_ACTION);
     if (!$action) {
       $this->logger()->error('hOCR Derivative action not found.');
@@ -82,7 +76,8 @@ class PublicHocrDrushCommands extends DrushCommands {
       $this->logger()->error('hOCR Derivative action is misconfigured, cannot proceed.');
       return;
     }
-    foreach ($fids as $fid) {
+    while ($row = fgetcsv(STDIN)) {
+      [$fid] = $row;
       /** @var \Drupal\file\FileInterface $file */
       $file = $this->entityTypeManager->getStorage('file')->load($fid);
       if (!$file) {
@@ -100,7 +95,7 @@ class PublicHocrDrushCommands extends DrushCommands {
         }
       }
       else {
-        $this->logger->info("Would update fid $fid from public:// to $new_scheme");
+        $this->logger()->info("Would update fid $fid from public:// to $new_scheme");
       }
     }
 
