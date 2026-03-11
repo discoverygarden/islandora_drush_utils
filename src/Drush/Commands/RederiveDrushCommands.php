@@ -50,7 +50,7 @@ class RederiveDrushCommands extends DrushCommands implements ContainerInjectionI
    * @command islandora_drush_utils:rederive
    * @aliases islandora_drush_utils:r,idu:r
    *
-   * @islandora-drush-utils-user-wrap
+   * @islandora-drush-utils-required-user-wrap
    */
   public function rederive(
     array $options = [

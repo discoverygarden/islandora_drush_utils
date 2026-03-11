@@ -144,6 +144,30 @@ two processes each processing 100 items at a time:
 drush islandora_drush_utils:display-hint-feeder --user=1 --term-uris='https://schema.org/Book' | parallel --pipe --max-args 100 -j2 drush islandora_drush_utils:update-display-hints --user=1 --term-uri='https://projectmirador.org'
 ```
 
+### Public hOCR updater
+
+In some instances, hOCR was set to the `public://` stream wrapper instead of
+going into the correct configured derivative scheme. There are two commands
+provided to remediate this.
+
+1. `islandora_drush_utils:identify-public-hocr` - Finds all file entities that
+exist within the `public://` stream wrapper that have the MIME type of
+`text/vnd.hocr+html`.
+2. `islandora_drush_utils:fix-public-hocr` - Updates all file entities passed to
+the configured scheme within the `generate_hocr_from_an_image` derivative
+action.
+
+To invoke the updater command:
+```bash
+drush islandora_drush_utils:identify-public-hocr > public_ocr.csv
+drush islandora_drush_utils:fix-public-hocr < public_ocr.csv
+```
+
+An alternative, more optimal approach would be to use GNU Parallel with
+two processes each processing 100 items at a time:
+```bash
+drush islandora_drush_utils:identify-public-hocr | parallel --pipe --max-args 100 -j2 drush islandora_drush_utils:fix-public-hocr
+```
 
 ## Troubleshooting/Issues
 
