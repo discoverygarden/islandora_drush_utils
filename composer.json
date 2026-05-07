@@ -15,6 +15,9 @@
         "discoverygarden/update-helper": "^1",
         "discoverygarden/dgi_standard_derivative_examiner": "^1.2 || ^2"
     },
+    "conflict": {
+        "drush/drush": "<13"
+    },
     "extra": {
         "drush": {
             "services": {

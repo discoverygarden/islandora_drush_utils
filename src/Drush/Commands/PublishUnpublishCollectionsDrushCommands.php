@@ -51,7 +51,7 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands implements 
     parent::__construct();
     $this->storage = $entity_type_manager;
     $this->utils = $islandora_utils;
-    $this->logger = $logger;
+    $this->logger()?->add('islandora_drush_utils', $logger);
   }
 
   /**
@@ -111,8 +111,10 @@ class PublishUnpublishCollectionsDrushCommands extends DrushCommands implements 
    *   The publish status of the nodes and media.
    * @param array $ancestor_nids
    *   The array of NIDs to search for as an ancestor.
+   * @param array $context
+   *   The batch context.
    */
-  public function updateStatusBatch(int $batch_size, bool $publish, array $ancestor_nids) {
+  public function updateStatusBatch(int $batch_size, bool $publish, array $ancestor_nids, array &$context) {
     $query = $this->storage->getStorage('node')->getQuery()
       ->condition('type', 'islandora_object')
       ->exists('field_member_of')
